@@ -248,6 +248,26 @@ static void esp_hosted_event_task(const struct device *dev, void *p2, void *p3)
 			wifi_mgmt_raise_connect_result_event(data->iface[ESP_HOSTED_STA_IF], ret);
 			continue;
 		}
+		case CtrlMsgId_Event_StationConnectedToAP:
+			/* Connection is handled via Resp_ConnectAP above */
+			LOG_DBG("Station connected to AP event received");
+			continue;
+		case CtrlMsgId_Event_StationConnectedToESPSoftAP: {
+			struct wifi_ap_sta_info sta_info = {0};
+
+			sta_info.link_mode = WIFI_LINK_MODE_UNKNOWN;
+			sta_info.twt_capable = false;
+			sta_info.mac_length = WIFI_MAC_ADDR_LEN;
+			esp_hosted_str_to_mac(
+				ctrl_msg.event_station_connected_to_ESP_SoftAP.mac.bytes,
+				sta_info.mac);
+			wifi_mgmt_raise_ap_sta_connected_event(data->iface[ESP_HOSTED_SAP_IF],
+							       &sta_info);
+			continue;
+		}
+		case CtrlMsgId_Event_CustomRPCUnserialisedMsg:
+			LOG_DBG("Custom RPC unserialised msg event received");
+			continue;
 		default: /* Unhandled events/responses will be queued. */
 			break;
 		}

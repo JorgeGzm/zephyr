@@ -147,9 +147,12 @@ enum CtrlMsgId {
     Event_Heartbeat = 302;
     Event_StationDisconnectFromAP = 303;
     Event_StationDisconnectFromESPSoftAP = 304;
+    Event_StationConnectedToAP = 305;
+    Event_StationConnectedToESPSoftAP = 306;
+    Event_CustomRPCUnserialisedMsg = 307;
     /* Add new control path command notification before Event_Max
      * and update Event_Max */
-    Event_Max = 305;
+    Event_Max = 308;
 }
 
 /* internal supporting structures for CtrlMsg */
@@ -359,11 +362,42 @@ message CtrlMsg_Event_Heartbeat {
 
 message CtrlMsg_Event_StationDisconnectFromAP {
     int32 resp = 1;
+    bytes ssid = 2;
+    uint32 ssid_len = 3;
+    bytes bssid = 4;
+    uint32 reason = 5;
+    int32 rssi = 6;
+}
+
+message CtrlMsg_Event_StationConnectedToAP {
+    int32 resp = 1;
+    bytes ssid = 2;
+    uint32 ssid_len = 3;
+    bytes bssid = 4;
+    uint32 channel = 5;
+    int32 authmode = 6;
+    int32 aid = 7;
 }
 
 message CtrlMsg_Event_StationDisconnectFromESPSoftAP {
     int32 resp = 1;
     bytes mac = 2;
+    uint32 aid = 3;
+    bool is_mesh_child = 4;
+    uint32 reason = 5;
+}
+
+message CtrlMsg_Event_StationConnectedToESPSoftAP {
+    int32 resp = 1;
+    bytes mac = 2;
+    uint32 aid = 3;
+    bool is_mesh_child = 4;
+}
+
+message CtrlMsg_Event_CustomRpcUnserialisedMsg {
+    int32 resp = 1;
+    uint32 custom_evt_id = 2;
+    bytes data = 3;
 }
 
 message CtrlMsg {
@@ -435,5 +469,8 @@ message CtrlMsg {
         CtrlMsg_Event_Heartbeat event_heartbeat = 302;
         CtrlMsg_Event_StationDisconnectFromAP event_station_disconnect_from_AP = 303;
         CtrlMsg_Event_StationDisconnectFromESPSoftAP event_station_disconnect_from_ESP_SoftAP = 304;
+        CtrlMsg_Event_StationConnectedToAP event_station_connected_to_AP = 305;
+        CtrlMsg_Event_StationConnectedToESPSoftAP event_station_connected_to_ESP_SoftAP = 306;
+        CtrlMsg_Event_CustomRpcUnserialisedMsg event_custom_rpc_unserialised_msg = 307;
     }
 }
