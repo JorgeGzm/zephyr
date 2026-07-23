@@ -187,6 +187,14 @@ manifest:
       path: modules/hal/gigadevice
       groups:
         - hal
+    # GD32VW55x radio SDK sources (blobs come via `west blobs fetch`).
+    # Local module for now; swap url for its GitHub home when published.
+    - name: gigadevice_wifi_ble
+      url: file:///home/jaga/zephyrproject/modules/hal/gigadevice_wifi_ble
+      revision: bd432e580fdbc6b5fe54e72e75f1acc254ac60cb
+      path: modules/hal/gigadevice_wifi_ble
+      groups:
+        - hal
     - name: hal_infineon
       revision: c73313ab49840fee98cb347034526aaab62122a6
       path: modules/hal/infineon

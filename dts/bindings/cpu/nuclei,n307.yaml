@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuclei N307 RISC-V Core
+
+compatible: "nuclei,n307"
+
+include: riscv-common.yaml

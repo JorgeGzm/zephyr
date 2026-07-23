@@ -23,7 +23,8 @@ if HAS_GD32_HAL
 choice GD32_HXTAL_FREQUENCY
 	prompt "High speed external oscillator clock frequency"
 	default GD32_HXTAL_FIRMWARE_DEFINED if \
-		SOC_SERIES_GD32F403 || SOC_SERIES_GD32F4XX || SOC_SERIES_GD32F3X0
+		SOC_SERIES_GD32F403 || SOC_SERIES_GD32F4XX || SOC_SERIES_GD32F3X0 || \
+		SOC_SERIES_GD32VW55X
 	default GD32_HXTAL_25MHZ if SOC_SERIES_GD32VF103 || SOC_SERIES_GD32E50X
 	default GD32_HXTAL_8MHZ if SOC_SERIES_GD32E10X
 	help
@@ -104,6 +105,11 @@ config USE_GD32_CMP
 	help
 	  Enable GD32 Comparator (CMP) HAL module driver
 
+config USE_GD32_CAU
+	bool
+	help
+	  Enable GD32 Cryptographic Acceleration Unit (CAU) HAL module driver
+
 config USE_GD32_CRC
 	bool
 	help
@@ -134,6 +140,17 @@ config USE_GD32_DMA
 	bool
 	help
 	  Enable GD32 Direct Memory Access controller (DMA) HAL module driver
+
+config USE_GD32_ECLIC
+	bool
+	help
+	  Enable GD32 Enhanced Core Local Interrupt Controller (ECLIC) HAL
+	  module driver
+
+config USE_GD32_EFUSE
+	bool
+	help
+	  Enable GD32 EFUSE HAL module driver
 
 config USE_GD32_ENET
 	bool
@@ -167,6 +184,11 @@ config USE_GD32_GPIO
 	  Enable GD32 General-purpose and Alternate-Function I/Os
 	  (GPIO and AFIO) HAL module driver
 
+config USE_GD32_HAU
+	bool
+	help
+	  Enable GD32 Hash Acceleration Unit (HAU) HAL module driver
+
 config USE_GD32_I2C
 	bool
 	help
@@ -187,10 +209,21 @@ config USE_GD32_MISC
 	help
 	  Enable GD32 System Utilities (MISC) HAL module driver
 
+config USE_GD32_PKCAU
+	bool
+	help
+	  Enable GD32 Public Key Cryptographic Acceleration Unit (PKCAU) HAL
+	  module driver
+
 config USE_GD32_PMU
 	bool
 	help
 	  Enable GD32 Power Management Unit (PMU) HAL module driver
+
+config USE_GD32_QSPI
+	bool
+	help
+	  Enable GD32 Quad-SPI interface (QSPI) HAL module driver
 
 config USE_GD32_RCU
 	bool

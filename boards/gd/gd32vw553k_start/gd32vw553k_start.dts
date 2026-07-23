@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <gd/gd32vw553xm.dtsi>
+#include "gd32vw553k_start-pinctrl.dtsi"
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	model = "GigaDevice GD32VW553K-START";
+	compatible = "gd,gd32vw553k-start";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,flash-controller = &fmc;
+		zephyr,entropy = &trng;
+		zephyr,bt-hci = &ble;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led1: led1 {
+			gpios = <&gpioc 0 GPIO_ACTIVE_HIGH>;
+			label = "LED1";
+		};
+
+		led2: led2 {
+			gpios = <&gpioc 1 GPIO_ACTIVE_HIGH>;
+			label = "LED2";
+		};
+
+		led3: led3 {
+			gpios = <&gpioc 2 GPIO_ACTIVE_HIGH>;
+			label = "LED3";
+		};
+	};
+
+	aliases {
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		watchdog0 = &fwdgt;
+	};
+};
+
+&gpioa {
+	status = "okay";
+};
+
+&gpiob {
+	status = "okay";
+};
+
+&gpioc {
+	status = "okay";
+};
+
+/* UART2 on PA6/PA7 is wired to the GD-Link virtual COM port */
+&uart2 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart2_default>;
+	pinctrl-names = "default";
+};
+
+&fwdgt {
+	status = "okay";
+};
+
+&trng {
+	status = "okay";
+};
+
+&wifi {
+	status = "okay";
+};
+
+&ble {
+	status = "okay";
+};

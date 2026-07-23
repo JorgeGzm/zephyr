@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2022 BrainCo Inc.
+ * Copyright (c) 2026 Jorge Guzman
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -98,7 +99,7 @@ static const uint32_t table_samp_time[] = {
 	SMP_TIME(71),
 	SMP_TIME(239),
 };
-#elif defined(CONFIG_SOC_SERIES_GD32A50X)
+#elif defined(CONFIG_SOC_SERIES_GD32A50X) || defined(CONFIG_SOC_SERIES_GD32VW55X)
 #define SMP_TIME(x)	ADC_SAMPLETIME_##x##POINT5
 
 static const uint16_t acq_time_tbl[8] = {3, 15, 28, 56, 84, 112, 144, 480};
@@ -192,6 +193,10 @@ static void adc_context_update_buffer_pointer(struct adc_context *ctx,
 
 static inline void adc_gd32_calibration(const struct adc_gd32_config *cfg)
 {
+#ifdef CONFIG_SOC_SERIES_GD32VW55X
+	/* The GD32VW55x ADC has no RSTCLB/CLB self-calibration bits. */
+	ARG_UNUSED(cfg);
+#else
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_RSTCLB;
 	/* Wait for calibration registers initialized. */
 	while (ADC_CTL1(cfg->reg) & ADC_CTL1_RSTCLB) {
@@ -201,6 +206,7 @@ static inline void adc_gd32_calibration(const struct adc_gd32_config *cfg)
 	/* Wait for calibration complete. */
 	while (ADC_CTL1(cfg->reg) & ADC_CTL1_CLB) {
 	}
+#endif
 }
 
 static int adc_gd32_configure_sampt(const struct adc_gd32_config *cfg,
@@ -300,7 +306,8 @@ static int adc_gd32_start_read(const struct device *dev,
 
 #if defined(CONFIG_SOC_SERIES_GD32F4XX) || \
 	defined(CONFIG_SOC_SERIES_GD32F3X0) || \
-	defined(CONFIG_SOC_SERIES_GD32L23X)
+	defined(CONFIG_SOC_SERIES_GD32L23X) || \
+	defined(CONFIG_SOC_SERIES_GD32VW55X)
 	ADC_CTL0(cfg->reg) &= ~ADC_CTL0_DRES;
 	ADC_CTL0(cfg->reg) |= CTL0_DRES(resolution_id);
 #elif defined(CONFIG_SOC_SERIES_GD32F403) || \
@@ -402,6 +409,21 @@ static int adc_gd32_init(const struct device *dev)
 #ifdef CONFIG_SOC_SERIES_GD32A50X
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_ETSRC;
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_ETERC;
+#endif
+
+#ifdef CONFIG_SOC_SERIES_GD32VW55X
+	/*
+	 * The ADC kernel clock defaults to PCLK2/2 (80 MHz here), which is well
+	 * above the ADC maximum; divide PCLK2 by 8 (20 MHz), matching the vendor
+	 * BSP. Raise EOC after each conversion; the conversion is software
+	 * triggered (SWRCST), so no external trigger source is selected.
+	 */
+	{
+		volatile uint32_t *cctl = (volatile uint32_t *)(cfg->reg + 0x304U);
+
+		*cctl = (*cctl & ~ADC_CCTL_ADCCK) | ADC_ADCCK_PCLK2_DIV8;
+	}
+	ADC_CTL1(cfg->reg) |= ADC_CTL1_EOCM;
 #endif
 
 	/* Enable ADC */

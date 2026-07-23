@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: gd32vw553k_start
+name: GigaDevice GD32VW553K-START
+type: mcu
+arch: riscv
+toolchain:
+  - zephyr
+ram: 287
+flash: 3948
+supported:
+  - gpio
+  - uart
+  - watchdog
+  - entropy
+  - wifi
+  - netif
+testing:
+  ignore_tags:
+    - bluetooth
+vendor: gd

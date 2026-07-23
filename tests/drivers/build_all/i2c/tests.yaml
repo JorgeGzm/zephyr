@@ -11,3 +11,9 @@ tests:
   drivers.i2c.build.bus_recovery:
     platform_allow: nucleo_f411re
     extra_args: "CONFIG_I2C=y CONFIG_I2C_BUS_RECOVERY=y"
+  drivers.i2c.build.gd32_v2:
+    # GD32 "v2" controller (gd,gd32-i2c-v2); needs its real SoC for the
+    # clock/reset/pinctrl, so it is built on the GD32VW553 board. Wi-Fi is
+    # disabled to keep the build free of vendor blobs.
+    platform_allow: gd32vw553k_start
+    extra_args: "CONFIG_I2C=y CONFIG_WIFI_GDWIFI=n"

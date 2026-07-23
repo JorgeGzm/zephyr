@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: GD32VW55x BLE 5.3 controller (virtual HCI over the vendor blob)
+
+compatible: "gd,gd32vw55x-bt-hci"
+
+include: bt-hci.yaml
+
+properties:
+  bt-hci-name:
+    default: "GD32VW55x"
+  bt-hci-bus:
+    default: "virtual"

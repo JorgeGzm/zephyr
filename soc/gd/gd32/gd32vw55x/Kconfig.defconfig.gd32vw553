@@ -1,0 +1,52 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_GD32VW553
+
+config KERNEL_ENTRY
+	default "__nuclei_start"
+
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+	# The Nuclei SysTimer clock source is switched to the full system
+	# clock (160 MHz) by soc_early_init_hook().
+	default 160000000
+
+config RISCV_MCAUSE_EXCEPTION_MASK
+	default 0xFFF
+
+config RISCV_SOC_INTERRUPT_INIT
+	default y
+
+config NUM_IRQS
+	default 116 if  NUCLEI_ECLIC
+	default 16  if !NUCLEI_ECLIC
+
+config ARCH_IRQ_VECTOR_TABLE_ALIGN
+	default 512 if NUCLEI_ECLIC
+
+config RISCV_TRAP_HANDLER_ALIGNMENT
+	default 64 if NUCLEI_ECLIC && !RISCV_VECTORED_MODE
+
+# The N307 ECLIC implements 4 clicintctl bits; use ALL of them as interrupt
+# LEVEL bits (vendor model): kernel sources stay at level 0 (encoded 0x0F),
+# the radio sources at level 8 (0x8F) hardware-preempt them, and the
+# sys_enter_critical() MTH threshold (0x10) masks the kernel without ever
+# stalling the radio.  With the defaults (nlbits=0) every source collapses
+# to one level: no radio preemption and no effective MTH masking -- the BLE
+# baseband misses its half-slot deadlines.
+
+config CLIC_PARAMETER_INTCTLBITS
+	default 4
+
+config CLIC_PARAMETER_MNLBITS
+	default 4
+
+config NUM_PREEMPT_PRIORITIES
+	# The radio OS wrapper maps the SDK task priorities 0..31 onto the
+	# preemptive range (31 - p).
+	default 40 if WIFI_GDWIFI
+
+config HEAP_MEM_POOL_SIZE
+	default 131072 if WIFI_GDWIFI
+
+endif # SOC_GD32VW553

@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <mem.h>
+#include <gd/gd32vw55x.dtsi>
+
+&flash0 {
+	/* 4 MB part.  The usable application area mirrors the vendor SDK
+	 * layout: the top of flash holds the NVDS (20 KB @ 0x083fb000) and
+	 * the RF calibration data, so expose 3948 KB like the validated
+	 * NuttX port does.
+	 */
+	reg = <0x08000000 DT_SIZE_K(3948)>;
+};

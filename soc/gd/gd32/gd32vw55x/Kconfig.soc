@@ -1,0 +1,20 @@
+# GD32VW55x SOC configuration options
+
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_GD32VW55X
+	bool
+	select SOC_FAMILY_GD_GD32
+	help
+	  Enable support for GigaDevice GD32VW55x MCU series
+
+config SOC_SERIES
+	default "gd32vw55x" if SOC_SERIES_GD32VW55X
+
+config SOC_GD32VW553
+	bool
+	select SOC_SERIES_GD32VW55X
+
+config SOC
+	default "gd32vw553" if SOC_GD32VW553

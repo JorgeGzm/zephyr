@@ -1,0 +1,125 @@
+# GigaDevice GD32VW55x Wi-Fi driver options
+
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig WIFI_GDWIFI
+	bool "GigaDevice GD32VW55x Wi-Fi (vendor SDK blobs)"
+	default y
+	depends on DT_HAS_GD_GD32VW55X_WIFI_ENABLED
+	depends on SOC_SERIES_GD32VW55X
+	select DYNAMIC_INTERRUPTS
+	select DYNAMIC_THREAD
+	select DYNAMIC_THREAD_ALLOC
+	select THREAD_STACK_INFO
+	select THREAD_MONITOR
+	select THREAD_NAME
+	select NET_L2_ETHERNET
+	select WIFI_USE_NATIVE_NETWORKING
+	select NET_SOCKETS
+	select NET_DRIVERS
+	select NET_LOOPBACK
+	select NET_UDP
+	select NET_IPV4
+	select USE_GD32_ECLIC
+	select USE_GD32_EFUSE
+	select USE_GD32_FMC
+	select USE_GD32_PMU
+	select USE_GD32_TIMER
+	select USE_GD32_CAU
+	select USE_GD32_HAU
+	select USE_GD32_PKCAU
+	select USE_GD32_CRC
+	select USE_GD32_TRNG
+	select USE_GD32_EXTI
+	select USE_GD32_SYSCFG
+	select USE_GD32_DMA
+	select USE_GD32_RTC
+	help
+	  Wi-Fi 6 driver for the GD32VW55x built on the GigaDevice
+	  WiFi & BLE SDK: the MAC/PHY, RF and WPA libraries are prebuilt
+	  BSD-3 blobs; wifi_manager and the platform layer are compiled
+	  from the SDK sources.  The OS binding is gdwifi_os.c (sys_*
+	  facade) and the network binding implements the SDK lwIP seam on
+	  top of the Zephyr network stack.
+
+if WIFI_GDWIFI
+
+config WIFI_GDWIFI_SDK_PATH
+	string "Path to a local GD32VW55x WiFi & BLE SDK checkout (optional)"
+	default ""
+	help
+	  Leave empty (the default) to let the build fetch the OFFICIAL
+	  GigaDevice SDK from GitHub at configure time, pinned to the
+	  validated V1.0.3g commit, and apply the small source-only port
+	  patch (same model as the Espressif esp-hal-3rdparty flow: no
+	  binary ever enters the Zephyr tree; the BSD-3 blobs stay in the
+	  vendor checkout under the west workspace).
+
+	  Set a path only to use an existing local checkout; it must be
+	  V1.0.3g (945c6e2) with the port patch applied (the hunks are
+	  guarded by the GDWIFI_RTOS/GDWIFI_RTOS_NET defines).  The
+	  prebuilt blobs are ABI-validated against this exact version.
+
+config WIFI_GDWIFI_TRACE
+	bool "Bring-up trace of the OS wrapper and radio init"
+	help
+	  Log task/mailbox activity of the sys_* facade and each radio
+	  bring-up step.  Noisy: bring-up debugging only.
+
+config HEAP_MEM_POOL_ADD_SIZE_GDWIFI
+	int
+	default 131072
+	help
+	  Radio stack heap contribution (sys_malloc runs on k_malloc).
+
+config BT_GD32VW55X
+	bool "GD32VW55x BLE controller (virtual HCI over the vendor blob)"
+	# The PUBLIC V1.0.3g blobs ship without the HCI transport
+	# (ble_register_hci_uart is a stub): this driver only works with a
+	# libble built with CFG_VIRTUAL_HCI_MODE (partner deliverable).
+	default n
+	depends on DT_HAS_GD_GD32VW55X_BT_HCI_ENABLED
+	depends on WIFI_GDWIFI
+	depends on BT_HCI
+	help
+	  Drive the GD32VW55x BLE 5.3 controller (prebuilt libble) with the
+	  native Zephyr Bluetooth host, through the SDK virtual HCI RAM
+	  transport -- the same model as the Espressif VHCI driver.  The
+	  radio platform is shared with (and brought up by) the Wi-Fi
+	  driver, with coexistence handled inside the vendor blobs.
+
+config WIFI_GDWIFI_TEST_AUTOCONNECT
+	bool "TEST ONLY: auto-connect to a fixed AP at boot"
+	help
+	  Debug/validation helper: right after the radio bring-up the driver
+	  connects to the SSID below (blocking) so Wi-Fi can be exercised
+	  end-to-end without a serial console (flaky GD-Link VCP).  Never
+	  enable in production images.
+
+config WIFI_GDWIFI_TEST_SSID
+	string "TEST ONLY: SSID"
+	depends on WIFI_GDWIFI_TEST_AUTOCONNECT
+	default ""
+
+config WIFI_GDWIFI_TEST_PSK
+	string "TEST ONLY: WPA2 passphrase"
+	depends on WIFI_GDWIFI_TEST_AUTOCONNECT
+	default ""
+
+config GD32VW55X_BLE_VENDOR
+	bool "GD32VW55x BLE advertising via the vendor host (no Zephyr BT host)"
+	depends on WIFI_GDWIFI
+	help
+	  Start the RivieraWaves BLE host embedded in the prebuilt libble
+	  (the only path the public GigaDevice blobs support: they carry no
+	  HCI transport, so the native Zephyr Bluetooth host cannot drive
+	  the controller).  Advertises a connectable device with the name
+	  below; GAP/GATT belong to the vendor API (ble_adv_*, ble_gatts_*).
+
+config GD32VW55X_BLE_VENDOR_NAME
+	string "Advertised device name"
+	default "ZephyrGD32"
+	depends on GD32VW55X_BLE_VENDOR
+
+endif # WIFI_GDWIFI

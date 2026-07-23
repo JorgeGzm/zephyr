@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: GigaDevice GD32VW55x integrated Wi-Fi 6 MAC/PHY
+
+compatible: "gd,gd32vw55x-wifi"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

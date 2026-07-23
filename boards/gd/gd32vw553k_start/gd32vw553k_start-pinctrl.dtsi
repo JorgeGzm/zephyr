@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <dt-bindings/pinctrl/gd32vw553k(m)xx-pinctrl.h>
+
+&pinctrl {
+	uart2_default: uart2_default {
+		group1 {
+			pinmux = <UART2_TX_PA6>, <UART2_RX_PA7>;
+		};
+	};
+};
