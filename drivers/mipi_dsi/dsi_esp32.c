@@ -26,7 +26,30 @@ LOG_MODULE_REGISTER(dsi_esp32, CONFIG_MIPI_DSI_LOG_LEVEL);
 
 #define MIPI_DSI_DEFAULT_TIMEOUT_CLK_FREQ_MHZ 10
 #define MIPI_DSI_DEFAULT_ESCAPE_CLK_FREQ_MHZ  18
-#define MIPI_DSI_PHY_PLL_REF_CLK_FREQ_HZ      40000000
+
+/* Where the D-PHY PLL takes its reference depends on the chip revision, and the
+ * two paths have neither the same source nor the same rate. Revision v3.0 and
+ * later run it from the 40 MHz XTAL; earlier silicon has only the legacy route
+ * off PLL_F20M at 20 MHz. The low-level layer switches on the same condition,
+ * and its legacy path does not know the v3 sources at all — asking for one there
+ * lands in its `default: abort()`, which the compiler folds into an
+ * unconditional call, so the host aborts during init on, for example, the
+ * ESP32-P4 v1.0 silicon the M5Stack Tab5 carries.
+ *
+ * The revision comes from CONFIG_SOC_ESP32P4_REV_MIN_FULL (major * 100 + minor),
+ * which the SoC derives from the SOC_ESP32P4_REV_* symbol the board selects and
+ * which defaults to 301 when a board declares none. Not the HAL's
+ * HAL_CONFIG(CHIP_SUPPORT_MIN_REV): that expands to CONFIG_ESP_REV_MIN_FULL, an
+ * ESP-IDF symbol no Zephyr build defines, so it is silently 0 in #if and pins
+ * every build to the legacy path -- including one for v3 silicon.
+ */
+#if CONFIG_SOC_ESP32P4_REV_MIN_FULL >= 300
+#define MIPI_DSI_PHY_PLLREF_CLK_SRC      MIPI_DSI_PHY_PLLREF_CLK_SRC_DEFAULT
+#define MIPI_DSI_PHY_PLL_REF_CLK_FREQ_HZ 40000000
+#else
+#define MIPI_DSI_PHY_PLLREF_CLK_SRC      MIPI_DSI_PHY_PLLREF_CLK_SRC_DEFAULT_LEGACY
+#define MIPI_DSI_PHY_PLL_REF_CLK_FREQ_HZ 20000000
+#endif
 
 /* The PHY PLL only has settings for this range, and a rate outside it is
  * programmed with the wrong one rather than being rejected.
@@ -310,7 +333,7 @@ static int mipi_dsi_esp32_init(const struct device *dev)
 	mipi_dsi_ll_set_phy_config_clock_source(0, MIPI_DSI_PHY_CFG_CLK_SRC_DEFAULT);
 	mipi_dsi_ll_enable_phy_config_clock(0, true);
 
-	mipi_dsi_ll_set_phy_pllref_clock_source(0, MIPI_DSI_PHY_PLLREF_CLK_SRC_DEFAULT);
+	mipi_dsi_ll_set_phy_pllref_clock_source(0, MIPI_DSI_PHY_PLLREF_CLK_SRC);
 	mipi_dsi_ll_set_phy_pll_ref_clock_div(0, 1);
 	mipi_dsi_ll_enable_phy_pllref_clock(0, true);
 
