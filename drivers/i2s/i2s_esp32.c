@@ -37,11 +37,24 @@
 LOG_MODULE_REGISTER(i2s_esp32, CONFIG_I2S_LOG_LEVEL);
 
 /* I2S_CLK_SRC_DEFAULT is an auto-select sentinel on esp32p4, not an
- * alias of a module clock, so its rate resolves to zero. PLL_F160M is
- * available on the revisions zephyr supports.
+ * alias of a module clock, so its rate resolves to zero.
+ *
+ * PLL_F160M is only routed to I2S from esp32p4 hw_ver3 onwards -- the SoC's
+ * own clk_tree_defs.h says so on the enumerator. Selecting it on earlier
+ * silicon leaves the peripheral without a source clock, and the first
+ * i2s_ll_tx_update() then spins forever waiting for hardware to clear a bit
+ * that needs that clock to move. XTAL is present on every revision.
+ *
+ * CONFIG_SOC_ESP32P4_REV_MIN_FULL, not the HAL's HAL_CONFIG(CHIP_SUPPORT_MIN_REV):
+ * that one expands to an ESP-IDF symbol Zephyr never defines, which #if reads as
+ * 0, so it would force this branch on v3 silicon too.
  */
 #ifdef CONFIG_SOC_SERIES_ESP32P4
+#if CONFIG_SOC_ESP32P4_REV_MIN_FULL >= 300
 #define I2S_ESP32_CLK_SRC I2S_CLK_SRC_PLL_160M
+#else
+#define I2S_ESP32_CLK_SRC I2S_CLK_SRC_XTAL
+#endif
 #else
 #define I2S_ESP32_CLK_SRC I2S_CLK_SRC_DEFAULT
 #endif
