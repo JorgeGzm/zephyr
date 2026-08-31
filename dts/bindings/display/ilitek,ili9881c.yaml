@@ -1,0 +1,29 @@
+#
+# Copyright (c) 2026 GZM
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+description: |
+  ILI9881C MIPI DSI display panel controller.
+
+  The panel is 720x1280 in its native portrait orientation; a landscape product
+  built around it (the M5Stack Tab5, for one) rotates in software rather than in
+  the panel, so width/height here are the panel's own.
+
+compatible: "ilitek,ili9881c"
+
+include: [mipi-dsi-device.yaml, display-controller.yaml]
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    description: |
+      Panel enable/reset line, asserted then released during init. The Tab5
+      wires this to LCD_EN on an I2C IO-expander rather than to a SoC pin, so
+      the driver must not assume it can be driven from an interrupt context.
+
+  bl-gpios:
+    type: phandle-array
+    description: |
+      Backlight enable GPIO (active high).

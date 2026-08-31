@@ -1,0 +1,26 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+config ILI9881C
+	bool "ILI9881C MIPI-DSI display driver"
+	default y
+	depends on DT_HAS_ILITEK_ILI9881C_ENABLED
+	select MIPI_DSI
+	select GPIO if $(dt_compat_any_has_prop,$(DT_COMPAT_ILITEK_ILI9881C),reset-gpios) || \
+		$(dt_compat_any_has_prop,$(DT_COMPAT_ILITEK_ILI9881C),bl-gpios)
+	help
+	  Enable driver for the Ilitek ILI9881C, a MIPI-DSI video mode panel
+	  controller. The panel is driven in video mode, so the host streams
+	  pixels continuously and this driver only carries the initialisation
+	  sequence and the power/backlight control.
+
+if ILI9881C
+
+config DISPLAY_ILI9881C_INIT_PRIORITY
+	int "Initialization priority"
+	default MIPI_DSI_INIT_PRIORITY
+	help
+	  The panel attaches to the MIPI-DSI host, so it has to initialise after
+	  that host and after the scanout controller streaming to it.
+
+endif # ILI9881C
