@@ -245,6 +245,16 @@ static int display_esp32_dsi_dma_setup(const struct device *dev)
 	uint8_t ch = data->dma_channel;
 
 	dw_gdma_ll_enable_bus_clock(0, true);
+
+	/* Release the module from reset before touching any of its registers.
+	 * The bus clock alone is not enough: out of a power-on the DW-GDMA is
+	 * held in reset, and the very next line -- a read-modify-write of
+	 * reset0 -- takes a load access fault at 0x50081058 and halts the board
+	 * during panel init. A warm reset hides it, because the module was
+	 * already released by the run before.
+	 */
+	dw_gdma_ll_reset_register(0);
+
 	dw_gdma_ll_reset(dma);
 
 	dw_gdma_ll_enable_controller(dma, true);
