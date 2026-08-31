@@ -1,0 +1,34 @@
+# Copyright (c) 2026 GZM Embarcados
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Everest Semiconductor ES8388 stereo audio codec.
+
+  A low-power codec with a stereo DAC feeding two output pairs (LOUT1/ROUT1 and
+  LOUT2/ROUT2) and a stereo ADC. Control is over I2C; audio rides an I2S bus on
+  which the codec is the slave, so the SoC drives MCLK, BCLK and LRCK.
+
+  On the M5Stack Tab5 both output pairs are wired and the speaker amplifier is
+  gated by an IO expander pin, given here as spk-en-gpios.
+
+compatible: "everest,es8388"
+
+include: [i2c-device.yaml]
+
+properties:
+  spk-en-gpios:
+    type: phandle-array
+    description: |
+      Speaker amplifier enable. Driven active when the output starts and
+      inactive when it stops, so that the amplifier is not left powered - and
+      not left passing the noise the codec makes while it is being set up.
+
+  dac-output:
+    type: string
+    default: "both"
+    enum: ["lout1-rout1", "lout2-rout2", "both"]
+    description: |
+      Which output pair the DAC is routed to. LOUT1/ROUT1 is usually the
+      headphone amplifier and LOUT2/ROUT2 the loudspeaker one, but the two are
+      interchangeable and boards wire them either way, so the default enables
+      both rather than guessing.

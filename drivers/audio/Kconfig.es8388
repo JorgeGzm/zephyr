@@ -1,0 +1,12 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+config AUDIO_CODEC_ES8388
+	bool "Everest Semiconductor ES8388 codec support"
+	default y
+	select I2C
+	depends on DT_HAS_EVEREST_ES8388_ENABLED
+	help
+	  Enable support for the Everest Semiconductor ES8388, a stereo codec
+	  with a DAC feeding two output pairs and a stereo ADC. Control is over
+	  I2C; audio rides an I2S bus on which the codec is the slave.
