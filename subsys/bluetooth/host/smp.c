@@ -4935,6 +4935,18 @@ static void bt_smp_pkey_ready(const uint8_t *pkey)
 			continue;
 		}
 
+		/* The flag outlives the connection. A link that goes away while
+		 * the public key is still being computed leaves its pool entry
+		 * flagged with chan.conn already NULL, and the role test below
+		 * then dereferences it. Reachable only with CONFIG_BT_CENTRAL
+		 * enabled: without it the compiler folds the whole condition
+		 * away, which is why this hid until the first dual-role build.
+		 */
+		if (smp->chan.chan.conn == NULL) {
+			atomic_clear_bit(smp->flags, SMP_FLAG_PKEY_SEND);
+			continue;
+		}
+
 		if (IS_ENABLED(CONFIG_BT_CENTRAL) &&
 		    smp->chan.chan.conn->role == BT_HCI_ROLE_CENTRAL) {
 			err = sc_send_public_key(smp);
