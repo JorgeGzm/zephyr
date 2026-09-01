@@ -676,6 +676,17 @@
 			};
 		};
 
+		/* MIPI-CSI-2 receiver. The host and bridge sit next to the DSI
+		 * transmitter and share its D-PHY rail; the HAL locates both
+		 * blocks itself, so only the bridge FIFO the DMA drains is
+		 * given here.
+		 */
+		csi: csi@50104000 {
+			compatible = "espressif,esp32-csi";
+			reg = <0x50104000 0x1000>;
+			status = "disabled";
+		};
+
 		sdhc: sdhc@50083000 {
 			compatible = "espressif,esp32-sdhc";
 			reg = <0x50083000 0x1000>;

@@ -90,3 +90,5 @@ if(CONFIG_VIDEO_SW_GENERATOR)
 endif()
 
 zephyr_linker_sources(DATA_SECTIONS video.ld)
+zephyr_library_sources_ifdef(CONFIG_VIDEO_SC202CS sc202cs.c)
+zephyr_library_sources_ifdef(CONFIG_VIDEO_ESP32_CSI video_esp32_csi.c)

@@ -1,0 +1,24 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+config VIDEO_SC202CS
+	bool "SmartSens SC202CS image sensor"
+	default y
+	select I2C
+	depends on DT_HAS_SMARTSENS_SC202CS_ENABLED
+	help
+	  Enable driver for the SmartSens SC202CS, a 2 MP MIPI-CSI-2 sensor
+	  that outputs RAW Bayer over a single data lane.
+
+if VIDEO_SC202CS
+
+config VIDEO_SC202CS_INIT_PRIORITY
+	int "Initialization priority"
+	default 80
+	help
+	  Later than the IO expanders (70) on purpose: the enable line is
+	  typically a pin on one of them, so this driver has to come up after the
+	  expander and after the I2C controller carrying both.
+
+endif # VIDEO_SC202CS
+

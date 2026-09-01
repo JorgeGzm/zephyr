@@ -1,0 +1,21 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+config VIDEO_ESP32_CSI
+	bool "ESP32-P4 MIPI-CSI-2 receiver"
+	default y
+	depends on DT_HAS_ESPRESSIF_ESP32_CSI_ENABLED
+	help
+	  Enable the MIPI-CSI-2 receiver on the ESP32-P4, which captures from a
+	  camera sensor into memory.
+
+if VIDEO_ESP32_CSI
+
+config VIDEO_ESP32_CSI_INIT_PRIORITY
+	int "Initialization priority"
+	default 85
+	help
+	  After the sensor it reads from, which itself comes up after the IO
+	  expander that usually powers it.
+
+endif # VIDEO_ESP32_CSI

@@ -1,0 +1,38 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  ESP32-P4 MIPI-CSI-2 receiver.
+
+  Takes a CSI-2 stream from a camera sensor and hands the pixels to memory
+  through the DW-GDMA. The receiver does not convert: what the sensor sends is
+  what arrives, so a sensor emitting RAW Bayer produces RAW Bayer buffers.
+
+  The D-PHY shares its 2.5 V rail with the DSI transmitter (internal LDO unit
+  3), so on a board that already drives a MIPI panel the rail is up before this
+  peripheral is touched.
+
+compatible: "espressif,esp32-csi"
+
+include: base.yaml
+
+properties:
+  sensor:
+    type: phandle
+    required: true
+    description: The camera sensor feeding this receiver.
+
+  data-lanes:
+    type: int
+    required: true
+    enum: [1, 2]
+    description: Number of CSI-2 data lanes wired between sensor and SoC.
+
+  lane-rate-mbps:
+    type: int
+    required: true
+    description: |
+      Bit rate of one data lane, in Mbps, which the D-PHY PLL is programmed
+      for. It comes from the sensor's mode, not from a free choice: a sensor
+      sending faster or slower than this produces corrupt lines rather than an
+      error.

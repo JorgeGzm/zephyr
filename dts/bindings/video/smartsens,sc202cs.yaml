@@ -1,0 +1,24 @@
+# Copyright (c) 2026 GZM
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  SmartSens SC202CS 2 MP CMOS image sensor.
+
+  Control is over SCCB, which is I2C with 16-bit register addresses. Pixels
+  leave over MIPI-CSI-2 as RAW Bayer (BGGR), one data lane, so a receiver with
+  an ISP has to demosaic them.
+
+  The sensor takes its 24 MHz input clock from its own oscillator on the boards
+  seen so far, which is why no clock property is defined here.
+
+compatible: "smartsens,sc202cs"
+
+include: i2c-device.yaml
+
+properties:
+  enable-gpios:
+    type: phandle-array
+    description: |
+      Line that powers or enables the sensor, driven active during init. Often
+      a pin on an IO expander rather than a SoC GPIO, in which case this driver
+      must initialise after that expander.
