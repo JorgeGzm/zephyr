@@ -509,8 +509,9 @@ static int display_esp32_dsi_write_locked(const struct device *dev, const uint16
 	}
 
 	if ((size_t)src_pitch * write_h > desc->buf_size) {
-		LOG_ERR("Buffer of %u bytes is too small for %ux%u", desc->buf_size, write_w,
-			write_h);
+		LOG_ERR("Buffer of %u bytes is too small for %ux%u (pitch %u, %u bpp -> needs %u)",
+			desc->buf_size, write_w, write_h, desc->pitch, bpp,
+			(unsigned int)((size_t)src_pitch * write_h));
 		return -EINVAL;
 	}
 
