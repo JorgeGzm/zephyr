@@ -251,6 +251,9 @@ static enum wifi_security_type esp_hosted_mcu_map_security(int authmode)
 	}
 }
 
+#if defined(CONFIG_WIFI_ESP_HOSTED_MCU_AP_STA_MODE)
+/* Guarded like its only caller below: without the soft-AP there is nothing
+ * to map a security type for. */
 /* Map a Zephyr security type to the esp_wifi wifi_auth_mode_t the soft-AP expects. */
 static int esp_hosted_mcu_ap_authmode(enum wifi_security_type security)
 {
@@ -272,6 +275,7 @@ static int esp_hosted_mcu_ap_authmode(enum wifi_security_type security)
 		return -ENOTSUP;
 	}
 }
+#endif /* CONFIG_WIFI_ESP_HOSTED_MCU_AP_STA_MODE */
 
 static int esp_hosted_mcu_scan(const struct device *dev, struct net_if *iface,
 			       struct wifi_scan_params *params, scan_result_cb_t cb)
