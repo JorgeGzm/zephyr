@@ -183,7 +183,8 @@ manifest:
       groups:
         - hal
     - name: hal_gigadevice
-      revision: 804f92bf5794e403fab89178dcc6d775b9269c0d
+      url: https://github.com/JorgeGzm/hal_gigadevice
+      revision: dd512ebb3844ee58cebc23aa86af3e88ab9141b9
       path: modules/hal/gigadevice
       groups:
         - hal
