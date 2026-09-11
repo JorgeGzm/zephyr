@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+#include <dt-bindings/pinctrl/gd32vw553k(m)xx-pinctrl.h>
+
+&pinctrl {
+	i2c0_default: i2c0_default {
+		group1 {
+			pinmux = <I2C0_SCL_PA2>, <I2C0_SDA_PA3>;
+			drive-open-drain;
+			bias-pull-up;
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

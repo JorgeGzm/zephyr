@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+CONFIG_GD32_HXTAL_FIRMWARE_DEFINED=y
+
+# The prebuilt radio libraries (west blobs) are built for the
+# rv32imafc/ilp32f ABI: every image that links them needs the FPU, and
+# the N307 FPU is there anyway -- enable it board-wide so the standard
+# samples (wifi shell, BLE) build with no extra arguments.
+CONFIG_FPU=y
+CONFIG_CONSOLE=y
+CONFIG_UART_CONSOLE=y
+CONFIG_SERIAL=y
+CONFIG_GPIO=y

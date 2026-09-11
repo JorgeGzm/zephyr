@@ -18,3 +18,8 @@ tests:
     integration_platforms:
       - qemu_cortex_a53
     extra_args: DTC_OVERLAY_FILE="virtio.overlay"
+  drivers.i2c.build.gd32_v2:
+    # GD32 "v2" controller (gd,gd32-i2c-v2); needs its real SoC for the
+    # clock/reset/pinctrl, so it is built on the GD32VW553 board.
+    platform_allow: gd32vw553k_start
+    extra_args: "CONFIG_I2C=y"

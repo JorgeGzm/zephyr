@@ -1,0 +1,161 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <gd/gd32vw553xm.dtsi>
+#include "gd32vw553k_start-pinctrl.dtsi"
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	model = "GigaDevice GD32VW553K-START";
+	compatible = "gd,gd32vw553k-start";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,flash-controller = &fmc;
+		zephyr,entropy = &trng;
+		zephyr,crc = &crc;
+		zephyr,bt-hci = &ble;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led1: led1 {
+			gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+			label = "LED1 (red)";
+		};
+
+		led2: led2 {
+			gpios = <&gpioa 12 GPIO_ACTIVE_HIGH>;
+			label = "LED2 (green)";
+		};
+
+		led3: led3 {
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
+			label = "LED3 (blue)";
+		};
+	};
+
+	aliases {
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		watchdog0 = &fwdgt;
+		rtc = &rtc;
+	};
+};
+
+&gpioa {
+	status = "okay";
+};
+
+&gpiob {
+	status = "okay";
+};
+
+&gpioc {
+	status = "okay";
+};
+
+/* UART2 on PA6/PA7 is wired to the GD-Link virtual COM port */
+&uart2 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart2_default>;
+	pinctrl-names = "default";
+};
+
+&fwdgt {
+	status = "okay";
+};
+
+&rtc {
+	status = "okay";
+};
+
+&crc {
+	status = "okay";
+};
+
+&lvd {
+	status = "okay";
+};
+
+&cau {
+	status = "okay";
+};
+
+&hau {
+	status = "okay";
+};
+
+&flash0 {
+	/*
+	 * MCUboot layout: 4 KB pages, 1848 KB slots (462 pages, MCUboot needs
+	 * BOOT_MAX_IMG_SECTORS=512), swap with scratch. The last 20 KB hold
+	 * the NVDS of the Wi-Fi radio firmware and are never erased.
+	 */
+	partitions {
+		ranges;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
+			label = "mcuboot";
+			reg = <0x00000000 DT_SIZE_K(128)>;
+		};
+
+		storage_partition: partition@20000 {
+			compatible = "zephyr,mapped-partition";
+			label = "storage";
+			reg = <0x00020000 DT_SIZE_K(128)>;
+		};
+
+		slot0_partition: partition@40000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-0";
+			reg = <0x00040000 DT_SIZE_K(1848)>;
+		};
+
+		slot1_partition: partition@20e000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-1";
+			reg = <0x0020e000 DT_SIZE_K(1848)>;
+		};
+
+		scratch_partition: partition@3dc000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-scratch";
+			reg = <0x003dc000 DT_SIZE_K(124)>;
+		};
+
+		nvds_partition: partition@3fb000 {
+			compatible = "zephyr,mapped-partition";
+			label = "wifi-nvds";
+			reg = <0x003fb000 DT_SIZE_K(20)>;
+			read-only;
+		};
+	};
+};
+
+&trng {
+	status = "okay";
+};
+
+&wifi {
+	status = "okay";
+};
+
+&ble {
+	status = "okay";
+};
