@@ -64,6 +64,7 @@ CMU
 COMPILER_RT_RTLIB
 CPU_V7  # U-Boot boards/luckfox/pico_ultra
 CRC  # Used in TI CC13x2 / CC26x2 SDK comment
+DEBUG_PRINT_ENABLE  # GD32VW55x Wi-Fi SDK build option, drivers/wifi/gdwifi/config
 DEEP_SLEEP  # #defined by RV32M1 in ext/
 DESCRIPTION
 DT_HAS_  # example from doc/build/dts/dt-vs-kconfig.rst
@@ -81,6 +82,7 @@ FOO_SETTING_1
 FOO_SETTING_2
 HEAP_MEM_POOL_ADD_SIZE_  # Used as an option matching prefix
 HUGETLBFS  # Linux, in boards/xtensa/intel_adsp_cavs25/doc
+HW_SECURITY_ENGINE  # GD32VW55x Wi-Fi SDK build option, drivers/wifi/gdwifi/config
 I2C_TINY_USB  # Linux, in samples/subsys/usb/i2c_tiny_usb/README.rst
 IAR_BUFFERED_WRITE
 IAR_DATA_INIT
@@ -171,6 +173,7 @@ TYPE_BOOLEAN
 USB_CONSOLE
 USE_STDC_
 WHATEVER
+WPA3_SAE  # GD32VW55x Wi-Fi SDK build option, drivers/wifi/gdwifi/config
 ZEPHYR_TRY_MASS_ERASE  # MCUBoot setting described in sysbuild documentation
 ZTEST_FAIL_TEST_  # regex in tests/ztest/fail/CMakeLists.txt
 ZVFS_EVENTFD_ADD_SIZE_  # Used as an option matching prefix
