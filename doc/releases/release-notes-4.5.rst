@@ -1004,6 +1004,10 @@ New Boards
 
   * :zephyr:board:`fs_i6s` (``fs_i6s``)
 
+* GigaDevice Semiconductor
+
+  * :zephyr:board:`gd32vw553k_start` (``gd32vw553k_start``)
+
 * Heimann Sensor GmbH
 
   * :zephyr:board:`htpa_eval` (``htpa_eval``)
