@@ -54,6 +54,35 @@ static const struct gd32_exti_range line5_9_range = {5U, 9U};
 static const struct gd32_exti_range line10_15_range = {10U, 15U};
 #endif /* CONFIG_GPIO_GD32 */
 
+/* The LVD output of the PMU drives EXTI line 16 and has its own IRQ. */
+#define GD32_EXTI_LINE_LVD 16U
+#define GD32_EXTI_HAS_LVD                                                                          \
+	COND_CODE_1(DT_INST_IRQ_HAS_NAME(0, lvd), (IS_ENABLED(CONFIG_COMPARATOR_GD32_LVD)), (0))
+
+#if GD32_EXTI_HAS_LVD
+static const struct gd32_exti_range lvd_range = {GD32_EXTI_LINE_LVD, GD32_EXTI_LINE_LVD};
+#endif /* GD32_EXTI_HAS_LVD */
+
+/* The RTC alarm drives EXTI line 17 and has its own IRQ. */
+#define GD32_EXTI_LINE_RTC_ALARM 17U
+#define GD32_EXTI_HAS_RTC_ALARM                                                                    \
+	COND_CODE_1(DT_INST_IRQ_HAS_NAME(0, rtc_alarm), (IS_ENABLED(CONFIG_RTC_ALARM)), (0))
+
+#if GD32_EXTI_HAS_RTC_ALARM
+static const struct gd32_exti_range rtc_alarm_range = {GD32_EXTI_LINE_RTC_ALARM,
+						       GD32_EXTI_LINE_RTC_ALARM};
+#endif /* GD32_EXTI_HAS_RTC_ALARM */
+
+/* The RTC wake-up timer drives EXTI line 21 and has its own IRQ. */
+#define GD32_EXTI_LINE_RTC_WAKEUP 21U
+#define GD32_EXTI_HAS_RTC_WAKEUP                                                                   \
+	COND_CODE_1(DT_INST_IRQ_HAS_NAME(0, rtc_wakeup), (IS_ENABLED(CONFIG_PM)), (0))
+
+#if GD32_EXTI_HAS_RTC_WAKEUP
+static const struct gd32_exti_range rtc_wakeup_range = {GD32_EXTI_LINE_RTC_WAKEUP,
+							GD32_EXTI_LINE_RTC_WAKEUP};
+#endif /* GD32_EXTI_HAS_RTC_WAKEUP */
+
 /** @brief Obtain line IRQ number if enabled. */
 #define EXTI_LINE_IRQ_COND(enabled, line) \
 	COND_CODE_1(enabled, (DT_INST_IRQ_BY_NAME(0, line, irq)), (EXTI_NOTSUP))
@@ -75,8 +104,9 @@ static const uint8_t line2irq[NUM_EXTI_LINES] = {
 	EXTI_LINE_IRQ_COND(CONFIG_GPIO_GD32, line10_15),
 	EXTI_LINE_IRQ_COND(CONFIG_GPIO_GD32, line10_15),
 	EXTI_LINE_IRQ_COND(CONFIG_GPIO_GD32, line10_15),
-	EXTI_NOTSUP,
-	EXTI_NOTSUP,
+	COND_CODE_1(GD32_EXTI_HAS_LVD, (DT_INST_IRQ_BY_NAME(0, lvd, irq)), (EXTI_NOTSUP)),
+	COND_CODE_1(GD32_EXTI_HAS_RTC_ALARM, (DT_INST_IRQ_BY_NAME(0, rtc_alarm, irq)),
+		    (EXTI_NOTSUP)),
 	EXTI_NOTSUP,
 #ifdef CONFIG_SOC_SERIES_GD32F4XX
 	EXTI_NOTSUP,
@@ -84,6 +114,16 @@ static const uint8_t line2irq[NUM_EXTI_LINES] = {
 	EXTI_NOTSUP,
 	EXTI_NOTSUP,
 #endif /* CONFIG_SOC_SERIES_GD32F4XX */
+#ifdef CONFIG_SOC_SERIES_GD32VW55X
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	COND_CODE_1(GD32_EXTI_HAS_RTC_WAKEUP, (DT_INST_IRQ_BY_NAME(0, rtc_wakeup, irq)),
+		    (EXTI_NOTSUP)),
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+#endif /* CONFIG_SOC_SERIES_GD32VW55X */
 };
 
 __unused static void gd32_exti_isr(const void *isr_data)
@@ -193,6 +233,20 @@ static int gd32_exti_init(const struct device *dev)
 		    DT_INST_IRQ_BY_NAME(0, line10_15, priority),
 		    gd32_exti_isr, &line10_15_range, 0);
 #endif /* CONFIG_GPIO_GD32 */
+#if GD32_EXTI_HAS_LVD
+	IRQ_CONNECT(DT_INST_IRQ_BY_NAME(0, lvd, irq), DT_INST_IRQ_BY_NAME(0, lvd, priority),
+		    gd32_exti_isr, &lvd_range, 0);
+#endif /* GD32_EXTI_HAS_LVD */
+#if GD32_EXTI_HAS_RTC_ALARM
+	IRQ_CONNECT(DT_INST_IRQ_BY_NAME(0, rtc_alarm, irq),
+		    DT_INST_IRQ_BY_NAME(0, rtc_alarm, priority), gd32_exti_isr, &rtc_alarm_range,
+		    0);
+#endif /* GD32_EXTI_HAS_RTC_ALARM */
+#if GD32_EXTI_HAS_RTC_WAKEUP
+	IRQ_CONNECT(DT_INST_IRQ_BY_NAME(0, rtc_wakeup, irq),
+		    DT_INST_IRQ_BY_NAME(0, rtc_wakeup, priority), gd32_exti_isr, &rtc_wakeup_range,
+		    0);
+#endif /* GD32_EXTI_HAS_RTC_WAKEUP */
 
 	return 0;
 }
