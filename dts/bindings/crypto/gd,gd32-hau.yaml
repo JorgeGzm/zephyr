@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 hash acceleration unit (HAU).
+
+  The driver exposes it through the crypto hash API for SHA-224 and
+  SHA-256, computing a digest over one buffer per session.
+
+compatible: "gd,gd32-hau"
+
+include: [base.yaml, reset-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  resets:
+    required: true

@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 cryptographic acceleration unit (CAU).
+
+  The driver exposes the AES engine through the crypto API: ECB, CBC and
+  CTR modes with 128, 192 and 256-bit keys, synchronous operations on
+  separate input and output buffers.
+
+compatible: "gd,gd32-cau"
+
+include: [base.yaml, reset-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  resets:
+    required: true
