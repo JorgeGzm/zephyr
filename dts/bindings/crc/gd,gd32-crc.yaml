@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 CRC calculation unit.
+
+  The unit computes the CRC-32 with the fixed polynomial 0x04C11DB7 and
+  initial value 0xFFFFFFFF over 32-bit words, without input or output
+  reversal. The driver exposes it as CRC32_MPEG2 (native) and CRC32_IEEE
+  (input and output reversed in software, the polynomial division in
+  hardware).
+
+compatible: "gd,gd32-crc"
+
+include: [base.yaml, reset-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  resets:
+    required: true

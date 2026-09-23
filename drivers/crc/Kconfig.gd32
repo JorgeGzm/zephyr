@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config CRC_GD32
+	bool "GigaDevice GD32 CRC driver"
+	default y
+	depends on DT_HAS_GD_GD32_CRC_ENABLED
+	select CRC_DRIVER_HAS_CRC32_IEEE
+	select CRC_DRIVER_HAS_CRC32_MPEG2
+	help
+	  Enable the driver for the CRC calculation unit of GigaDevice GD32
+	  SoCs. The unit implements the CRC-32 polynomial 0x04C11DB7 with a
+	  fixed initial value, which covers CRC32_MPEG2 and CRC32_IEEE.
