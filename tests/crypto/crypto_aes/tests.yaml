@@ -14,6 +14,7 @@ tests:
       - esp32c3_devkitc
       - esp32c6_devkitc/esp32c6/hpcore
       - esp32h2_devkitm
+      - gd32vw553k_start
       - nucleo_h753zi
       - nucleo_wba55cg
       - sama7d65_curiosity

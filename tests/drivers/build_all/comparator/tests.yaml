@@ -130,6 +130,9 @@ tests:
       - DTC_OVERLAY_FILE="nxp_cmp/frdm_mcxc242.overlay"
     platform_allow:
       - frdm_mcxc242
+  drivers.comparator.build.gd32_lvd:
+    platform_allow:
+      - gd32vw553k_start
   drivers.comparator.build.renesas_lvd:
     extra_args:
       - DTC_OVERLAY_FILE="renesas_lvd/lvd.overlay"

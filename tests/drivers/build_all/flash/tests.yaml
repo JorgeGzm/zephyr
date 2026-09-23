@@ -10,6 +10,7 @@ tests:
   drivers.flash.build:
     platform_allow:
       - native_sim
+      - gd32vw553k_start
   drivers.flash.emul.build:
     platform_allow:
       - native_sim

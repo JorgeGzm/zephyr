@@ -1,0 +1,13 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioa 4 0>; /* J1 PA4 */
+		in-gpios = <&gpioa 5 0>;   /* J1 PA5 */
+	};
+};

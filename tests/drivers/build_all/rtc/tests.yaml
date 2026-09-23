@@ -4,6 +4,9 @@ common:
     - drivers
     - rtc
 tests:
+  drivers.rtc.build.gd32:
+    platform_allow:
+      - gd32vw553k_start
   drivers.rtc.build.sf32lb:
     platform_allow:
       - sf32lb52_devkit_lcd

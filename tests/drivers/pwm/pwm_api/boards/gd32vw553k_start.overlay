@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <dt-bindings/pinctrl/gd32vw553k(m)xx-pinctrl.h>
+
+/ {
+	aliases {
+		pwm-test = &pwm1;
+	};
+};
+
+&pinctrl {
+	pwm1_default: pwm1_default {
+		group1 {
+			pinmux = <GD32_PINMUX_AF('A', 0, AF1)>; /* PA0 (J1) = TIMER1_CH0 */
+		};
+	};
+};
+
+&timer1 {
+	status = "okay";
+	prescaler = <128>;
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_default>;
+	pinctrl-names = "default";
+};

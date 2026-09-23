@@ -19,6 +19,8 @@
 #define CRYPTO_DEV_COMPAT microchip_aes_g1
 #elif DT_HAS_COMPAT_STATUS_OKAY(sifli_sf32lb_crypto)
 #define CRYPTO_DEV_COMPAT sifli_sf32lb_crypto
+#elif DT_HAS_COMPAT_STATUS_OKAY(gd_gd32_cau)
+#define CRYPTO_DEV_COMPAT gd_gd32_cau
 #elif DT_HAS_COMPAT_STATUS_OKAY(st_stm32_aes)
 #define CRYPTO_DEV_COMPAT st_stm32_aes
 #elif DT_HAS_COMPAT_STATUS_OKAY(st_stm32_cryp)
