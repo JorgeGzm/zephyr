@@ -273,6 +273,23 @@ static int adc_gd32_channel_setup(const struct device *dev,
 					chan_cfg->acquisition_time);
 }
 
+static int adc_gd32_check_buffer_size(const struct adc_sequence *sequence)
+{
+	/* One channel per sequence, one 16-bit sample per sampling. */
+	size_t needed = sizeof(uint16_t);
+
+	if (sequence->options != NULL) {
+		needed *= (1U + sequence->options->extra_samplings);
+	}
+
+	if (sequence->buffer_size < needed) {
+		LOG_ERR("Provided buffer is too small (%zu/%zu)", sequence->buffer_size, needed);
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
 static int adc_gd32_start_read(const struct device *dev,
 			       const struct adc_sequence *sequence)
 {
@@ -280,11 +297,17 @@ static int adc_gd32_start_read(const struct device *dev,
 	const struct adc_gd32_config *cfg = dev->config;
 	uint8_t resolution_id;
 	uint32_t index;
+	int ret;
 
 	index = find_lsb_set(sequence->channels) - 1;
 	if (sequence->channels > BIT(index)) {
 		LOG_ERR("Only single channel supported");
 		return -ENOTSUP;
+	}
+
+	ret = adc_gd32_check_buffer_size(sequence);
+	if (ret != 0) {
+		return ret;
 	}
 
 	switch (sequence->resolution) {
