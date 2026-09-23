@@ -17,8 +17,8 @@
 #include <string.h>
 
 /* GD32 HAL headers */
-#include <gd32f4xx_rcu.h>
-#include <gd32f4xx_trng.h>
+#include <gd32_rcu.h>
+#include <gd32_trng.h>
 
 LOG_MODULE_REGISTER(entropy_gd32, CONFIG_ENTROPY_LOG_LEVEL);
 
@@ -37,6 +37,12 @@ static inline void entropy_gd32_clear_int_flags(void)
 
 static bool entropy_gd32_ck48m_ready(void)
 {
+#if !defined(CONFIG_SOC_SERIES_GD32F4XX)
+	/* Other series (e.g. GD32VW55x) clock the TRNG directly from the AHB
+	 * domain: there is no CK48M mux to check.
+	 */
+	return true;
+#else
 	/*
 	 * CK48M domain is used by TRNG (and also SDIO/USBFS/USBHS).
 	 *
@@ -56,6 +62,7 @@ static bool entropy_gd32_ck48m_ready(void)
 
 	/* PLLQ selected */
 	return (RCU_CTL & RCU_CTL_PLLSTB) != 0U;
+#endif /* !CONFIG_SOC_SERIES_GD32F4XX */
 }
 
 static void entropy_gd32_recover(void)

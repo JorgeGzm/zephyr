@@ -15,6 +15,7 @@ description: |
     - GD32E23x
     - GD32VF103
     - GD32L23x
+    - GD32VW55x
 
 include: soc-nv-flash.yaml
 
