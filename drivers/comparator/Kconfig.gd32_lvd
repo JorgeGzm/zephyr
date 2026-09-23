@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config COMPARATOR_GD32_LVD
+	bool "GigaDevice GD32 low voltage detector"
+	default y
+	depends on DT_HAS_GD_GD32_LVD_ENABLED
+	select GD32_EXTI
+	help
+	  Expose the low voltage detector (LVD) of GigaDevice GD32 SoCs
+	  through the comparator API: the output is high while the supply is
+	  below the programmed threshold, and crossing the threshold in either
+	  direction can trigger a callback.

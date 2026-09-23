@@ -1,0 +1,48 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 low voltage detector (LVD).
+
+  The LVD compares the VDD supply with a programmable threshold and drives
+  EXTI line 16, which makes it a comparator with VDD on its positive input
+  and the threshold on its negative one: the output is 1 while VDD is below
+  the threshold, a rising edge means VDD just dropped below it and a falling
+  edge means it recovered. The node covers the PMU register block, where the
+  detector is configured.
+
+  Example:
+
+    &lvd {
+        threshold-mv = <2700>;
+        status = "okay";
+    };
+
+compatible: "gd,gd32-lvd"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+    description: The PMU clock.
+
+  threshold-mv:
+    type: int
+    required: true
+    enum:
+      - 2100
+      - 2300
+      - 2400
+      - 2600
+      - 2700
+      - 2900
+      - 3000
+      - 3100
+    description: |
+      Nominal detection threshold in millivolts. The detector has some
+      hysteresis around it; the datasheet gives the exact rising and
+      falling levels for each setting.
