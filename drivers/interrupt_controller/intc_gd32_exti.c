@@ -147,7 +147,12 @@ int gd32_exti_configure(uint8_t line, gd32_exti_cb_t cb, void *user)
 	__ASSERT_NO_MSG(line < NUM_EXTI_LINES);
 	__ASSERT_NO_MSG(line2irq[line] != EXTI_NOTSUP);
 
-	if ((data->cbs[line].cb != NULL) && (cb != NULL)) {
+	/* A line can only be claimed by one owner, but that owner may
+	 * reconfigure it (e.g. gpio_pin_interrupt_configure() called again
+	 * on a pin whose interrupt is already enabled).
+	 */
+	if ((data->cbs[line].cb != NULL) && (cb != NULL) &&
+	    ((data->cbs[line].cb != cb) || (data->cbs[line].user != user))) {
 		return -EALREADY;
 	}
 
