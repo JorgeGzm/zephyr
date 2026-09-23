@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * TIMER2 is a 32-bit general timer, TIMER5 a 16-bit basic one. Both are
+ * clocked at 160 MHz; slow the 16-bit one down so the periods the test uses
+ * fit in its range.
+ */
+&timer2 {
+	status = "okay";
+};
+
+&timer5 {
+	status = "okay";
+	prescaler = <15999>;
+};

@@ -25,3 +25,4 @@ tests:
       - ai_m61_32s_kit # Requires binary blobs to build
       - ai_m62_12f_kit # Requires binary blobs to build
       - maix_m0s_dock # Requires binary blobs to build
+      - gd32vw553k_start # Requires binary blobs to build

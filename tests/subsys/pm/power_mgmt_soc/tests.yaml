@@ -51,6 +51,7 @@ tests:
       - kit_pse84_eval/pse846gps2dbzc4a/m55
       - frdm_mcxc242
       - frdm_mcxc444
+      - gd32vw553k_start
     tags: pm
     integration_platforms:
       - mec15xxevb_assy6853

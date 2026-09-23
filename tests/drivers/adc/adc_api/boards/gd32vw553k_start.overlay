@@ -1,0 +1,38 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <dt-bindings/pinctrl/gd32vw553k(m)xx-pinctrl.h>
+
+/ {
+	zephyr,user {
+		io-channels = <&adc0 8>;
+	};
+};
+
+&pinctrl {
+	adc0_default: adc0_default {
+		group1 {
+			pinmux = <GD32_PINMUX_AF('B', 0, ANALOG)>; /* PB0 (J1) = ADC IN8 */
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_default>;
+	pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@8 {
+		reg = <8>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};

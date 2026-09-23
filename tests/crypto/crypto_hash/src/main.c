@@ -16,6 +16,8 @@
 #define CRYPTO_DEV_COMPAT microchip_sha_g1_crypto
 #elif DT_HAS_COMPAT_STATUS_OKAY(renesas_smartbond_crypto)
 #define CRYPTO_DEV_COMPAT renesas_smartbond_crypto
+#elif DT_HAS_COMPAT_STATUS_OKAY(gd_gd32_hau)
+#define CRYPTO_DEV_COMPAT gd_gd32_hau
 #elif DT_HAS_COMPAT_STATUS_OKAY(st_stm32_hash)
 #define CRYPTO_DEV_COMPAT st_stm32_hash
 #elif DT_HAS_COMPAT_STATUS_OKAY(espressif_esp32_sha)
