@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config RTC_GD32
+	bool "GigaDevice GD32 RTC driver"
+	default y
+	depends on DT_HAS_GD_GD32_RTC_ENABLED
+	select USE_GD32_PMU
+	select USE_GD32_RCU
+	select GD32_EXTI if RTC_ALARM
+	help
+	  Enable the driver for the calendar RTC of GigaDevice GD32 SoCs.

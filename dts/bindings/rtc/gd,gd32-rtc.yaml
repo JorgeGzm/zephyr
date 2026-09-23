@@ -1,0 +1,58 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 calendar RTC (BCD time and date registers, as found on
+  the GD32VW55x series).
+
+  The RTC lives in the backup domain and keeps counting across system
+  resets for as long as that domain stays powered. The driver only
+  programs the prescalers when the calendar has never been configured, so
+  a time set before a reset survives it.
+
+  Example:
+
+    &rtc {
+        status = "okay";
+        clock-source = "lxtal";
+    };
+
+compatible: "gd,gd32-rtc"
+
+include: rtc-device.yaml
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+    description: |
+      The PMU clock, which has to run to unlock the backup domain and
+      reach the RTC registers.
+
+  clock-source:
+    type: string
+    required: true
+    enum:
+      - "irc32k"
+      - "lxtal"
+    description: |
+      Clock feeding the RTC: the internal 32 kHz RC oscillator (IRC32K) or
+      the external 32.768 kHz crystal (LXTAL). LXTAL is far more accurate
+      but needs a crystal on OSC32IN/OSC32OUT. The selection is latched by
+      the backup domain, so it only takes effect the first time the RTC is
+      enabled after a backup domain reset.
+
+  async-prescaler:
+    type: int
+    description: |
+      Asynchronous prescaler factor, 0 to 127. Defaults to 31 with IRC32K
+      and 127 with LXTAL.
+
+  sync-prescaler:
+    type: int
+    description: |
+      Synchronous prescaler factor, 0 to 32767. Defaults to 999 with IRC32K
+      and 255 with LXTAL. Together the prescalers must divide the clock
+      source down to 1 Hz: (async + 1) * (sync + 1) = source frequency.
