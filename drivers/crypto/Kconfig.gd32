@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config CRYPTO_GD32_CAU
+	bool "GigaDevice GD32 CAU (AES) driver"
+	default y
+	depends on DT_HAS_GD_GD32_CAU_ENABLED
+	select USE_GD32_CAU
+	help
+	  Enable the driver for the AES engine of the GD32 cryptographic
+	  acceleration unit (ECB, CBC and CTR modes).
+
+config CRYPTO_GD32_CAU_MAX_SESSIONS
+	int "Maximum number of concurrent CAU sessions"
+	depends on CRYPTO_GD32_CAU
+	default 2
+
+config CRYPTO_GD32_HAU
+	bool "GigaDevice GD32 HAU (hash) driver"
+	default y
+	depends on DT_HAS_GD_GD32_HAU_ENABLED
+	select USE_GD32_HAU
+	help
+	  Enable the driver for the GD32 hash acceleration unit (SHA-224 and
+	  SHA-256).
+
+config CRYPTO_GD32_HAU_MAX_SESSIONS
+	int "Maximum number of concurrent HAU sessions"
+	depends on CRYPTO_GD32_HAU
+	default 2
