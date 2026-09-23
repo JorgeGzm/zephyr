@@ -49,6 +49,37 @@
 #define DMA_CHMADDR(dma, ch) REG32((dma + 0x14UL) + 0x14UL * (uint32_t)(ch))
 #endif
 
+#ifdef CONFIG_SOC_SERIES_GD32VW55X
+/*
+ * The GD32VW55x has a single DMA instance, so its HAL defines the register
+ * accessors without the instance parameter (e.g. DMA_CHCTL(ch), not
+ * DMA_CHCTL(dma, ch)).  The register layout is the GD32F4xx "v1" one, so
+ * re-parameterize the accessors this driver uses (the same approach the
+ * GD32F3X0 block above takes for its own HAL quirk).
+ */
+#undef DMA_INTF0
+#undef DMA_INTF1
+#undef DMA_INTC0
+#undef DMA_INTC1
+#undef DMA_CHCTL
+#undef DMA_CHCNT
+#undef DMA_CHPADDR
+#undef DMA_CHM0ADDR
+#undef DMA_CHM1ADDR
+#undef DMA_CHFCTL
+
+#define DMA_INTF0(dma)	       REG32((dma) + 0x00U)
+#define DMA_INTF1(dma)	       REG32((dma) + 0x04U)
+#define DMA_INTC0(dma)	       REG32((dma) + 0x08U)
+#define DMA_INTC1(dma)	       REG32((dma) + 0x0CU)
+#define DMA_CHCTL(dma, ch)     REG32(((dma) + 0x10U) + 0x18U * (uint32_t)(ch))
+#define DMA_CHCNT(dma, ch)     REG32(((dma) + 0x14U) + 0x18U * (uint32_t)(ch))
+#define DMA_CHPADDR(dma, ch)   REG32(((dma) + 0x18U) + 0x18U * (uint32_t)(ch))
+#define DMA_CHM0ADDR(dma, ch)  REG32(((dma) + 0x1CU) + 0x18U * (uint32_t)(ch))
+#define DMA_CHM1ADDR(dma, ch)  REG32(((dma) + 0x20U) + 0x18U * (uint32_t)(ch))
+#define DMA_CHFCTL(dma, ch)    REG32(((dma) + 0x24U) + 0x18U * (uint32_t)(ch))
+#endif
+
 #define GD32_DMA_INTF(dma)	  DMA_INTF(dma)
 #define GD32_DMA_INTC(dma)	  DMA_INTC(dma)
 #define GD32_DMA_CHCTL(dma, ch)	  DMA_CHCTL((dma), (ch))

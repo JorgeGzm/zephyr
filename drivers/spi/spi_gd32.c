@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 BrainCo Inc.
+ * Copyright (c) 2026 Jorge Guzman
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -20,6 +21,24 @@
 #endif
 
 #include <gd32_spi.h>
+
+#ifdef CONFIG_SOC_SERIES_GD32VW55X
+/*
+ * The GD32VW55x has a single SPI instance, so its HAL defines the SPI register
+ * accessors without the peripheral-base parameter (e.g. SPI_STAT, not
+ * SPI_STAT(spix)).  The register layout is otherwise the classic SPI IP, so
+ * re-parameterize the accessors this driver uses (same approach the GD32F3X0
+ * DMA path uses for its own HAL quirk).
+ */
+#undef SPI_CTL0
+#undef SPI_CTL1
+#undef SPI_STAT
+#undef SPI_DATA
+#define SPI_CTL0(reg) REG32((reg) + 0x00U)
+#define SPI_CTL1(reg) REG32((reg) + 0x04U)
+#define SPI_STAT(reg) REG32((reg) + 0x08U)
+#define SPI_DATA(reg) REG32((reg) + 0x0CU)
+#endif /* CONFIG_SOC_SERIES_GD32VW55X */
 
 #include <zephyr/logging/log.h>
 #include <zephyr/irq.h>
@@ -177,14 +196,23 @@ static int spi_gd32_configure(const struct device *dev,
 				     (clock_control_subsys_t)&cfg->clkid,
 				     &bus_freq);
 
-	for (uint8_t i = 0U; i <= GD32_SPI_PSC_MAX; i++) {
+	uint8_t psc;
+
+	for (psc = 0U; psc < GD32_SPI_PSC_MAX; psc++) {
 		bus_freq = bus_freq >> 1U;
 		if (bus_freq <= config->frequency) {
-			SPI_CTL0(cfg->reg) &= ~SPI_CTL0_PSC;
-			SPI_CTL0(cfg->reg) |= CTL0_PSC(i);
 			break;
 		}
 	}
+	/*
+	 * If the requested rate is below the slowest achievable one
+	 * (bus clock / 256), clamp to the maximum prescaler instead of
+	 * leaving PSC at its previous/default value -- otherwise the bus
+	 * would run far too fast (e.g. an SD card init at 400 kHz off a
+	 * 160 MHz bus would end up at bus/2 = 80 MHz and never respond).
+	 */
+	SPI_CTL0(cfg->reg) &= ~SPI_CTL0_PSC;
+	SPI_CTL0(cfg->reg) |= CTL0_PSC(psc);
 
 	data->ctx.config = config;
 
