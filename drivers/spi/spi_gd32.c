@@ -154,6 +154,13 @@ static int spi_gd32_configure(const struct device *dev,
 		return -ENOTSUP;
 	}
 
+	if (SPI_WORD_SIZE_GET(config->operation) != 8 &&
+	    SPI_WORD_SIZE_GET(config->operation) != 16) {
+		LOG_ERR("Word size %u not supported (8 or 16 bits only)",
+			SPI_WORD_SIZE_GET(config->operation));
+		return -ENOTSUP;
+	}
+
 	SPI_CTL0(cfg->reg) &= ~SPI_CTL0_SPIEN;
 
 	SPI_CTL0(cfg->reg) |= SPI_MASTER;
@@ -397,9 +404,22 @@ static int spi_gd32_transceive_impl(const struct device *dev,
 		goto error;
 	}
 
-	SPI_CTL0(cfg->reg) |= SPI_CTL0_SPIEN;
+	/* The context counts data frames, which are 8 or 16 bits wide here. */
+	spi_context_buffers_setup(&data->ctx, tx_bufs, rx_bufs,
+				  SPI_WORD_SIZE_GET(config->operation) == 8 ? 1 : 2);
 
-	spi_context_buffers_setup(&data->ctx, tx_bufs, rx_bufs, 1);
+	if (!spi_gd32_transfer_ongoing(data)) {
+		/* Nothing to transfer: do not clock a frame out. */
+#ifdef CONFIG_SPI_ASYNC
+		if (data->ctx.asynchronous) {
+			spi_context_complete(&data->ctx, dev, 0);
+		}
+#endif
+		ret = 0;
+		goto error;
+	}
+
+	SPI_CTL0(cfg->reg) |= SPI_CTL0_SPIEN;
 
 	spi_context_cs_control(&data->ctx, true);
 
