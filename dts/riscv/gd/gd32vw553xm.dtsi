@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <mem.h>
+#include <gd/gd32vw55x.dtsi>
+
+&flash0 {
+	/* 4 MB part. The last 20 KB (0x083fb000) hold the NVDS of the radio
+	 * firmware, RF calibration data included; boards keep them in a
+	 * partition of their own.
+	 */
+	reg = <0x08000000 DT_SIZE_K(4096)>;
+};
