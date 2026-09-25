@@ -117,4 +117,22 @@ config WIFI_GDWIFI_BLE_VENDOR_NAME
 	default "ZephyrGD32"
 	depends on WIFI_GDWIFI_BLE_VENDOR
 
+config WIFI_GDWIFI_BLE_VENDOR_ADV
+	bool "Advertise as soon as the host is up"
+	default y
+	depends on WIFI_GDWIFI_BLE_VENDOR
+	help
+	  Create a connectable advertising set named
+	  WIFI_GDWIFI_BLE_VENDOR_NAME once the host reports enable complete,
+	  and restart it after every disconnection.
+
+config WIFI_GDWIFI_BLE_VENDOR_CENTRAL
+	bool "Central role and pairing for the application"
+	depends on WIFI_GDWIFI_BLE_VENDOR
+	help
+	  Start the vendor host with both roles and pairing allowed, so the
+	  application can scan, connect, pair and act as a GATT client
+	  through the vendor API (ble_scan_*, ble_conn_*, ble_sec_*,
+	  ble_gattc_*), the way the SDK central examples do.
+
 endif # WIFI_GDWIFI
