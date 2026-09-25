@@ -25,6 +25,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/irq.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/wifi/gdwifi.h>
 
 #include <string.h>
 
@@ -279,16 +280,26 @@ static void gdble_adv_create(void)
  * create the advertising set.
  */
 
+static bool g_gdble_ready;
+
+bool gdwifi_ble_vendor_ready(void)
+{
+	return g_gdble_ready;
+}
+
 static void gdble_adp_evt_handler(ble_adp_evt_t event, ble_adp_data_u *p_data)
 {
 	g_gdble_dbg_adp_evt = event;
 
 	if (event == BLE_ADP_EVT_ENABLE_CMPL_INFO) {
-		gdble_adv_create();
+		g_gdble_ready = true;
+		if (IS_ENABLED(CONFIG_WIFI_GDWIFI_BLE_VENDOR_ADV)) {
+			gdble_adv_create();
+		}
 	}
 }
 
-/* Bring the controller and the vendor host up and start advertising.
+/* Bring the controller and the vendor host up, then advertise if enabled.
  * Called from the radio bring-up thread after gdwifi_start().
  */
 
@@ -323,7 +334,13 @@ int gdble_vendor_start(void)
 
 	ble_power_on();
 
-	param.role = BLE_GAP_ROLE_PERIPHERAL;
+	param.role = IS_ENABLED(CONFIG_WIFI_GDWIFI_BLE_VENDOR_CENTRAL) ? BLE_GAP_ROLE_ALL
+									 : BLE_GAP_ROLE_PERIPHERAL;
+	if (IS_ENABLED(CONFIG_WIFI_GDWIFI_BLE_VENDOR_CENTRAL)) {
+		/* As the SDK central examples: both pairing modes, privacy on */
+		param.pairing_mode = BLE_GAP_PAIRING_LEGACY | BLE_GAP_PAIRING_SECURE_CONNECTION;
+		param.privacy_cfg = BLE_GAP_PRIV_CFG_PRIV_EN_BIT;
+	}
 	param.ble_task_stack_size = GDBLE_TASK_STACK;
 	param.ble_task_priority = GDBLE_TASK_PRIO;
 	param.ble_app_task_stack_size = GDBLE_APP_TASK_STACK;
