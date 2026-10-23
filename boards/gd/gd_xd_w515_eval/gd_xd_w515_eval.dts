@@ -16,7 +16,7 @@
 	chosen {
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
-		zephyr,code-partition = &code_partition;
+		zephyr,code-partition = &slot0_partition;
 		zephyr,console = &usart2;
 		zephyr,shell-uart = &usart2;
 		zephyr,flash-controller = &fmc;
@@ -198,20 +198,44 @@
 };
 
 &flash0 {
+	/*
+	 * MCUboot layout: 4 KB pages, 864 KB slots (216 pages, MCUboot needs
+	 * BOOT_MAX_IMG_SECTORS=256), swap with scratch. Without MCUboot the
+	 * application is linked at the start of the flash.
+	 */
 	partitions {
-		compatible = "fixed-partitions";
+		ranges;
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		code_partition: partition@0 {
-			label = "code";
-			reg = <0x00000000 DT_SIZE_K(1920)>;
-			read-only;
+		boot_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
+			label = "mcuboot";
+			reg = <0x00000000 DT_SIZE_K(128)>;
 		};
 
-		storage_partition: partition@1e0000 {
+		storage_partition: partition@20000 {
+			compatible = "zephyr,mapped-partition";
 			label = "storage";
-			reg = <0x001e0000 DT_SIZE_K(128)>;
+			reg = <0x00020000 DT_SIZE_K(128)>;
+		};
+
+		slot0_partition: partition@40000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-0";
+			reg = <0x00040000 DT_SIZE_K(864)>;
+		};
+
+		slot1_partition: partition@118000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-1";
+			reg = <0x00118000 DT_SIZE_K(864)>;
+		};
+
+		scratch_partition: partition@1f0000 {
+			compatible = "zephyr,mapped-partition";
+			label = "image-scratch";
+			reg = <0x001f0000 DT_SIZE_K(64)>;
 		};
 	};
 };

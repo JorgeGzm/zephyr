@@ -77,15 +77,24 @@ The charger only answers on I2C with a battery or a supply on the BAT connector.
 Flash layout
 ============
 
-The application is linked at ``0x08000000``; the last 128 KB of the flash are the
-``storage_partition``:
+The board devicetree partitions the 2 MB of flash (4 KB pages) for MCUboot, with
+``zephyr,code-partition`` pointing at ``slot0_partition``:
 
 ======================== ========= ================================================
 Range                    Size      Partition
 ======================== ========= ================================================
-0x08000000 - 0x081e0000  1920 KiB  ``code_partition``
-0x081e0000 - 0x08200000  128 KiB   ``storage_partition``
+0x08000000 - 0x08020000  128 KiB   ``boot_partition`` (mcuboot)
+0x08020000 - 0x08040000  128 KiB   ``storage_partition``
+0x08040000 - 0x08118000  864 KiB   ``slot0_partition`` (image-0)
+0x08118000 - 0x081f0000  864 KiB   ``slot1_partition`` (image-1)
+0x081f0000 - 0x08200000  64 KiB    ``scratch_partition`` (image-scratch)
 ======================== ========= ================================================
+
+Without MCUboot the application ignores the partitions and is linked at the start of the
+flash. With ``west build --sysbuild`` and ``SB_CONFIG_BOOTLOADER_MCUBOOT=y`` the application
+is linked into ``slot0_partition`` and MCUboot into ``boot_partition``; each slot has 216
+pages, so MCUboot needs ``CONFIG_BOOT_MAX_IMG_SECTORS=256``. ``west flash`` programs each
+image at the Secure alias of its partition.
 
 TrustZone
 =========
