@@ -44,7 +44,7 @@ The ADC converts on 12 bits only, the GD32W51x has no resolution selection.
 
 The GD25Q128E QSPI NOR flash (16 MiB) is the ``qspi-nor-flash@0`` flash device, with a single
 ``qspi_storage_partition`` that covers it; the driver uses the indirect mode of the QSPI
-controller with single line commands, at 30 MHz. The QSPI is a Secure peripheral: the driver
+controller at 30 MHz, with the data on four lines (1-1-4 read and page program). The QSPI is a Secure peripheral: the driver
 keeps its pins Secure, while the GPIO driver releases the other pins to the Non-secure
 peripherals.
 

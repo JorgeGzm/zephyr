@@ -124,6 +124,7 @@
 		size = <DT_SIZE_M(128)>;
 		qspi-max-frequency = <DT_FREQ_M(30)>;
 		jedec-id = [c8 40 18];
+		quad-enable-requirements = "S2B1v6";
 		status = "okay";
 
 		partitions {
