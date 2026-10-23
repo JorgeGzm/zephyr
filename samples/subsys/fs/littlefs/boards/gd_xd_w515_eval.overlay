@@ -1,0 +1,24 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* LittleFS on the 16 MiB GD25Q128E QSPI NOR flash */
+/ {
+	fstab {
+		compatible = "zephyr,fstab";
+
+		lfs1: lfs1 {
+			compatible = "zephyr,fstab,littlefs";
+			read-size = <16>;
+			prog-size = <256>;
+			cache-size = <256>;
+			lookahead-size = <256>;
+			block-cycles = <512>;
+			partition = <&qspi_storage_partition>;
+			mount-point = "/lfs1";
+			automount;
+		};
+	};
+};
