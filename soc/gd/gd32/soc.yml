@@ -34,3 +34,6 @@ family:
   - name: gd32vw55x
     socs:
     - name: gd32vw553
+  - name: gd32w51x
+    socs:
+    - name: gd32w515

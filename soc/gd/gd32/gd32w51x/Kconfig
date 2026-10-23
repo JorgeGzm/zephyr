@@ -1,0 +1,16 @@
+# GD32W51x SOC implementation
+
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_GD32W51X
+	select ARM
+	select CPU_CORTEX_M33
+	select CPU_HAS_ARM_MPU
+	select CPU_HAS_ARM_SAU
+	select CPU_HAS_FPU
+	select ARMV8_M_DSP
+	select ARMV8_M_SE
+	select GD32_HAS_AF_PINMUX
+	select GD32_HAS_IRC_32K
+	select SOC_EARLY_INIT_HOOK

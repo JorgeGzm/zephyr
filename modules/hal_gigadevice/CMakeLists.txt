@@ -55,6 +55,17 @@ if(CONFIG_HAS_GD32_HAL)
     zephyr_compile_definitions(GD32A50X)
   endif()
 
+  # GD32W51X series: the HAL only configures the clocks in SystemInit() for a
+  # Secure (-mcmse) or a Non-secure build. Zephyr runs Secure-only without
+  # CMSE entry functions, which is what SYS_NS selects (Non-secure peripheral
+  # aliases, clock setup in SystemInit()).
+  if(${CONFIG_SOC_SERIES_GD32W51X})
+    zephyr_compile_definitions(SYS_NS=1)
+    if(${CONFIG_SOC_GD32W515})
+      zephyr_compile_definitions(GD32W515PI)
+    endif()
+  endif()
+
   # Global includes to be used outside hal_gigadevice
   zephyr_include_directories(${gd32_soc_sys_dir}/include)
   zephyr_include_directories(${gd32_std_dir}/include)
