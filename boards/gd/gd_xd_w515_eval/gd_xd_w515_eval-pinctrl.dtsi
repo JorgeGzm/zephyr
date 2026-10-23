@@ -33,6 +33,14 @@
 		};
 	};
 
+	qspi_default: qspi_default {
+		group1 {
+			pinmux = <QSPI_SCK_PA4>, <QSPI_CSN_PA5>, <QSPI_IO0_PA6>,
+				 <QSPI_IO1_PA7>, <QSPI_IO2_PB3>, <QSPI_IO3_PB4>;
+			slew-rate = "max-speed-50mhz";
+		};
+	};
+
 	adc0_default: adc0_default {
 		group1 {
 			pinmux = <ADC_IN1_PA1>, <ADC_IN2_PA2>, <ADC_IN3_PA3>, <ADC_IN6_PC2>;

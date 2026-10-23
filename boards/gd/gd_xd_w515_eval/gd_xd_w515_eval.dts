@@ -112,6 +112,33 @@
 	cs-gpios = <&gpiob 8 GPIO_ACTIVE_LOW>;
 };
 
+/* GD25Q128E (marked GD25T28E) 16 MiB QSPI NOR flash */
+&qspi {
+	status = "okay";
+	pinctrl-0 = <&qspi_default>;
+	pinctrl-names = "default";
+
+	gd25q128: qspi-nor-flash@0 {
+		compatible = "gd,gd32-qspi-nor";
+		reg = <0>;
+		size = <DT_SIZE_M(128)>;
+		qspi-max-frequency = <DT_FREQ_M(30)>;
+		jedec-id = [c8 40 18];
+		status = "okay";
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			qspi_storage_partition: partition@0 {
+				label = "qspi-storage";
+				reg = <0x00000000 DT_SIZE_M(16)>;
+			};
+		};
+	};
+};
+
 &adc0 {
 	status = "okay";
 	pinctrl-0 = <&adc0_default>;
