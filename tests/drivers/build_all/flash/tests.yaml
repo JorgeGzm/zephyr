@@ -11,6 +11,7 @@ tests:
     platform_allow:
       - native_sim
       - gd32vw553k_start
+      - gd_xd_w515_eval
   drivers.flash.emul.build:
     platform_allow:
       - native_sim

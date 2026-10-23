@@ -133,6 +133,7 @@ tests:
   drivers.comparator.build.gd32_lvd:
     platform_allow:
       - gd32vw553k_start
+      - gd_xd_w515_eval
   drivers.comparator.build.renesas_lvd:
     extra_args:
       - DTC_OVERLAY_FILE="renesas_lvd/lvd.overlay"

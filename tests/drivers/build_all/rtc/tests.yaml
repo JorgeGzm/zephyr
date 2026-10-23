@@ -7,6 +7,7 @@ tests:
   drivers.rtc.build.gd32:
     platform_allow:
       - gd32vw553k_start
+      - gd_xd_w515_eval
   drivers.rtc.build.sf32lb:
     platform_allow:
       - sf32lb52_devkit_lcd

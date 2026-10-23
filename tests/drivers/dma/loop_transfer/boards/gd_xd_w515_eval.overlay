@@ -1,0 +1,10 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* DMA1 is the controller with memory-to-memory transfers */
+tst_dma0: &dma1 {
+	status = "okay";
+};

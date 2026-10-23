@@ -1,0 +1,12 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* TIMER2_CH1 on PB0 drives the LCD backlight */
+/ {
+	aliases {
+		pwm-test = &pwm2;
+	};
+};

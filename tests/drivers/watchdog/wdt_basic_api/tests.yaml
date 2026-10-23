@@ -136,6 +136,7 @@ tests:
       - gd32vf103c_starter
       - gd32vf103v_eval
       - gd32vw553k_start
+      - gd_xd_w515_eval
       - longan_nano
     integration_platforms:
       - gd32e103v_eval
