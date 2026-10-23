@@ -4,9 +4,12 @@
 description: |
   NOR flash memory on the GigaDevice GD32 QSPI controller.
 
-  The memory is driven in the indirect mode, with single line commands:
-  read (0x0b), page program (0x02) and 4 KiB sector, 64 KiB block and chip
-  erase.
+  The memory is driven in the indirect mode: single line commands, 4 KiB
+  sector, 64 KiB block and chip erase. Reads (0x0b) and page programs
+  (0x02) use one line too, unless quad-enable-requirements is set: the
+  driver then sets the Quad Enable bit (S2B1v4, S2B1v5 and S2B1v6 are
+  supported) and moves the data on four lines with the 1-1-4 read (0x6b)
+  and page program (0x32) commands.
 
 compatible: "gd,gd32-qspi-nor"
 

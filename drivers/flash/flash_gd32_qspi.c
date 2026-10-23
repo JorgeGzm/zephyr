@@ -6,8 +6,10 @@
 
 /*
  * NOR flash memory on the GD32 QSPI controller, driven in the indirect mode
- * with polled transfers and single line commands. Memories up to 16 MiB
- * (3-byte addresses) are supported.
+ * with polled transfers. Commands and addresses use one line; with the
+ * quad-enable-requirements property, reads (0x6b) and page programs (0x32)
+ * move the data on four lines (1-1-4). Memories up to 16 MiB (3-byte
+ * addresses) are supported.
  */
 
 #define DT_DRV_COMPAT gd_gd32_qspi_nor
@@ -23,6 +25,7 @@
 #include <zephyr/drivers/reset.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/sys_io.h>
 #include <zephyr/sys/util.h>
 
@@ -46,6 +49,7 @@ LOG_MODULE_REGISTER(flash_gd32_qspi, CONFIG_FLASH_LOG_LEVEL);
 #define GD32_QSPI_CTL_QSPIEN  BIT(0)
 #define GD32_QSPI_CTL_ABORT   BIT(1)
 #define GD32_QSPI_CTL_BUSY    BIT(14)
+#define GD32_QSPI_CTL_FTL_POS 8U
 #define GD32_QSPI_CTL_PSC_POS 24U
 
 #define GD32_QSPI_DCFG_CSHC_POS 8U
@@ -64,6 +68,7 @@ LOG_MODULE_REGISTER(flash_gd32_qspi, CONFIG_FLASH_LOG_LEVEL);
 #define GD32_QSPI_TCFG_FMOD_POS    26U
 
 #define GD32_QSPI_LINES_1 1U
+#define GD32_QSPI_LINES_4 3U
 
 #define GD32_QSPI_FMOD_INDIRECT_WRITE 0U
 #define GD32_QSPI_FMOD_INDIRECT_READ  1U
@@ -79,7 +84,7 @@ LOG_MODULE_REGISTER(flash_gd32_qspi, CONFIG_FLASH_LOG_LEVEL);
 /* Polling bounds: one transfer step, a page program or erase, a chip erase */
 #define GD32_QSPI_STEP_TIMEOUT_US 10000U
 #define GD32_QSPI_WIP_TIMEOUT_MS  3000U
-#define GD32_QSPI_CE_TIMEOUT_MS   200000U
+#define GD32_QSPI_CE_TIMEOUT_MS   320000U
 
 /*
  * The QSPI is a Secure peripheral of the GD32W51x: its alternate functions
@@ -99,6 +104,8 @@ struct flash_gd32_qspi_config {
 	uint32_t flash_size;
 	uint32_t max_frequency;
 	uint8_t jedec_id[JESD216_READ_ID_LEN];
+	/* JESD216 quad enable requirement (DW15 QER), NONE for single line */
+	enum jesd216_dw15_qer_type qer;
 };
 
 struct flash_gd32_qspi_data {
@@ -154,8 +161,9 @@ static int qspi_wait_idle(const struct flash_gd32_qspi_config *cfg)
  * transfer starts when TCFG, or ADDR when there is an address phase, is
  * written.
  */
-static int qspi_transfer(const struct flash_gd32_qspi_config *cfg, uint8_t opcode, bool has_addr,
-			 uint32_t addr, uint8_t dummy, uint8_t *buf, size_t len, bool read)
+static int qspi_xfer(const struct flash_gd32_qspi_config *cfg, uint8_t opcode, bool has_addr,
+		     uint32_t addr, uint8_t dummy, uint32_t data_lines, uint8_t *buf, size_t len,
+		     bool read)
 {
 	uint32_t tcfg;
 	int ret;
@@ -180,7 +188,7 @@ static int qspi_transfer(const struct flash_gd32_qspi_config *cfg, uint8_t opcod
 
 	if (len > 0U) {
 		sys_write32(len - 1U, cfg->reg + GD32_QSPI_DTLEN);
-		tcfg |= GD32_QSPI_LINES_1 << GD32_QSPI_TCFG_DATAMOD_POS;
+		tcfg |= data_lines << GD32_QSPI_TCFG_DATAMOD_POS;
 	}
 
 	sys_write32(tcfg, cfg->reg + GD32_QSPI_TCFG);
@@ -189,18 +197,33 @@ static int qspi_transfer(const struct flash_gd32_qspi_config *cfg, uint8_t opcod
 		sys_write32(addr, cfg->reg + GD32_QSPI_ADDR);
 	}
 
-	for (size_t i = 0U; i < len; i++) {
+	/*
+	 * The FIFO threshold is one word: move whole words while at least four
+	 * bytes remain, then the tail byte by byte. In reads, FT or the end of
+	 * the transfer means that the FIFO holds what is left to read.
+	 */
+	for (size_t i = 0U; i < len;) {
+		size_t step = (len - i >= sizeof(uint32_t)) ? sizeof(uint32_t) : 1U;
+
 		ret = qspi_wait(cfg,
 				read ? (GD32_QSPI_STAT_FT | GD32_QSPI_STAT_TC) : GD32_QSPI_STAT_FT);
 		if (ret < 0) {
 			goto abort;
 		}
 
-		if (read) {
+		if (step == sizeof(uint32_t)) {
+			if (read) {
+				sys_put_le32(sys_read32(cfg->reg + GD32_QSPI_DATA), &buf[i]);
+			} else {
+				sys_write32(sys_get_le32(&buf[i]), cfg->reg + GD32_QSPI_DATA);
+			}
+		} else if (read) {
 			buf[i] = sys_read8(cfg->reg + GD32_QSPI_DATA);
 		} else {
 			sys_write8(buf[i], cfg->reg + GD32_QSPI_DATA);
 		}
+
+		i += step;
 	}
 
 	ret = qspi_wait(cfg, GD32_QSPI_STAT_TC);
@@ -220,6 +243,17 @@ abort:
 	LOG_ERR("transfer 0x%02x failed (%d)", opcode, ret);
 
 	return ret;
+}
+
+static int qspi_transfer(const struct flash_gd32_qspi_config *cfg, uint8_t opcode, bool has_addr,
+			 uint32_t addr, uint8_t dummy, uint8_t *buf, size_t len, bool read)
+{
+	return qspi_xfer(cfg, opcode, has_addr, addr, dummy, GD32_QSPI_LINES_1, buf, len, read);
+}
+
+static inline bool qspi_is_quad(const struct flash_gd32_qspi_config *cfg)
+{
+	return cfg->qer != JESD216_DW15_QER_NONE;
 }
 
 static int qspi_cmd(const struct flash_gd32_qspi_config *cfg, uint8_t opcode)
@@ -278,8 +312,13 @@ static int flash_gd32_qspi_read(const struct device *dev, off_t offset, void *da
 	}
 
 	k_sem_take(&dev_data->lock, K_FOREVER);
-	ret = qspi_transfer(cfg, SPI_NOR_CMD_READ_FAST, true, offset, GD32_QSPI_DUMMY_READ, data,
-			    len, true);
+	if (qspi_is_quad(cfg)) {
+		ret = qspi_xfer(cfg, SPI_NOR_CMD_QREAD, true, offset, GD32_QSPI_DUMMY_READ,
+				GD32_QSPI_LINES_4, data, len, true);
+	} else {
+		ret = qspi_transfer(cfg, SPI_NOR_CMD_READ_FAST, true, offset, GD32_QSPI_DUMMY_READ,
+				    data, len, true);
+	}
 	k_sem_give(&dev_data->lock);
 
 	return ret;
@@ -306,8 +345,11 @@ static int flash_gd32_qspi_write(const struct device *dev, off_t offset, const v
 
 		ret = qspi_write_enable(cfg);
 		if (ret == 0) {
-			ret = qspi_transfer(cfg, SPI_NOR_CMD_PP, true, offset, 0U, (uint8_t *)src,
-					    chunk, false);
+			ret = qspi_xfer(cfg,
+					qspi_is_quad(cfg) ? SPI_NOR_CMD_PP_1_1_4 : SPI_NOR_CMD_PP,
+					true, offset, 0U,
+					qspi_is_quad(cfg) ? GD32_QSPI_LINES_4 : GD32_QSPI_LINES_1,
+					(uint8_t *)src, chunk, false);
 		}
 		if (ret == 0) {
 			ret = qspi_wait_ready(cfg, GD32_QSPI_WIP_TIMEOUT_MS);
@@ -462,6 +504,53 @@ static DEVICE_API(flash, flash_gd32_qspi_api) = {
 #endif
 };
 
+/*
+ * Set the Quad Enable bit, bit 1 of the second status register (QER S2B1v4,
+ * v5 and v6), so that IO2/IO3 carry data instead of WP#/HOLD#. The bit is
+ * non-volatile and only written when it is clear.
+ */
+static int qspi_quad_enable(const struct flash_gd32_qspi_config *cfg)
+{
+	uint8_t sr[2];
+	int ret;
+
+	ret = qspi_transfer(cfg, SPI_NOR_CMD_RDSR2, false, 0U, 0U, &sr[1], 1U, true);
+	if (ret < 0 || (sr[1] & BIT(1)) != 0U) {
+		return ret;
+	}
+
+	ret = qspi_transfer(cfg, SPI_NOR_CMD_RDSR, false, 0U, 0U, &sr[0], 1U, true);
+	if (ret < 0) {
+		return ret;
+	}
+
+	sr[1] |= BIT(1);
+
+	ret = qspi_write_enable(cfg);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (cfg->qer == JESD216_DW15_QER_S2B1v6) {
+		ret = qspi_transfer(cfg, SPI_NOR_CMD_WRSR2, false, 0U, 0U, &sr[1], 1U, false);
+	} else {
+		ret = qspi_transfer(cfg, SPI_NOR_CMD_WRSR, false, 0U, 0U, sr, 2U, false);
+	}
+	if (ret == 0) {
+		ret = qspi_wait_ready(cfg, GD32_QSPI_WIP_TIMEOUT_MS);
+	}
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = qspi_transfer(cfg, SPI_NOR_CMD_RDSR2, false, 0U, 0U, &sr[1], 1U, true);
+	if (ret == 0 && (sr[1] & BIT(1)) == 0U) {
+		ret = -EIO;
+	}
+
+	return ret;
+}
+
 static void qspi_pins_secure(const struct pinctrl_dev_config *pcfg)
 {
 	const struct pinctrl_state *state;
@@ -510,14 +599,16 @@ static int flash_gd32_qspi_init(const struct device *dev)
 	psc = CLAMP(psc, 1U, 256U) - 1U;
 
 	/*
-	 * FIFO threshold of one byte, CS high for two cycles between commands,
+	 * FIFO threshold of one word, CS high for two cycles between commands,
 	 * memory size 2^(FMSZ + 1) bytes.
 	 */
 	sys_write32(0U, cfg->reg + GD32_QSPI_CTL);
 	sys_write32((1U << GD32_QSPI_DCFG_CSHC_POS) |
 			    ((find_lsb_set(cfg->flash_size) - 2U) << GD32_QSPI_DCFG_FMSZ_POS),
 		    cfg->reg + GD32_QSPI_DCFG);
-	sys_write32((psc << GD32_QSPI_CTL_PSC_POS) | GD32_QSPI_CTL_QSPIEN,
+	sys_write32((psc << GD32_QSPI_CTL_PSC_POS) |
+			    ((sizeof(uint32_t) - 1U) << GD32_QSPI_CTL_FTL_POS) |
+			    GD32_QSPI_CTL_QSPIEN,
 		    cfg->reg + GD32_QSPI_CTL);
 
 	ret = qspi_read_jedec_id(cfg, id);
@@ -532,12 +623,31 @@ static int flash_gd32_qspi_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	LOG_INF("%u KiB NOR flash, SCK %u Hz", cfg->flash_size / 1024U, ahb_rate / (psc + 1U));
+	if (qspi_is_quad(cfg)) {
+		ret = qspi_quad_enable(cfg);
+		if (ret < 0) {
+			LOG_ERR("quad enable failed (%d)", ret);
+			return ret;
+		}
+	}
+
+	LOG_INF("%u KiB NOR flash, SCK %u Hz, %s", cfg->flash_size / 1024U, ahb_rate / (psc + 1U),
+		qspi_is_quad(cfg) ? "1-1-4" : "1-1-1");
 
 	return 0;
 }
 
 BUILD_ASSERT(DT_INST_PROP(0, size) / 8 <= MB(16), "only 3-byte addresses are supported");
+
+#define GD32_QSPI_QER(inst)                                                                        \
+	_CONCAT(JESD216_DW15_QER_VAL_,                                                             \
+		DT_INST_STRING_TOKEN_OR(inst, quad_enable_requirements, NONE))
+
+BUILD_ASSERT((GD32_QSPI_QER(0) == JESD216_DW15_QER_VAL_NONE) ||
+		     (GD32_QSPI_QER(0) == JESD216_DW15_QER_VAL_S2B1v4) ||
+		     (GD32_QSPI_QER(0) == JESD216_DW15_QER_VAL_S2B1v5) ||
+		     (GD32_QSPI_QER(0) == JESD216_DW15_QER_VAL_S2B1v6),
+	     "supported quad enable requirements: NONE, S2B1v4, S2B1v5, S2B1v6");
 
 PINCTRL_DT_DEFINE(GD32_QSPI_NODE);
 
@@ -549,6 +659,7 @@ static const struct flash_gd32_qspi_config flash_gd32_qspi_cfg = {
 	.flash_size = DT_INST_PROP(0, size) / 8,
 	.max_frequency = DT_INST_PROP(0, qspi_max_frequency),
 	.jedec_id = DT_INST_PROP(0, jedec_id),
+	.qer = (enum jesd216_dw15_qer_type)GD32_QSPI_QER(0),
 };
 
 static struct flash_gd32_qspi_data flash_gd32_qspi_dev_data;
