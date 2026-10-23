@@ -113,6 +113,20 @@ static const uint32_t table_samp_time[] = {
 	SMP_TIME(143),
 	SMP_TIME(479)
 };
+#elif defined(CONFIG_SOC_SERIES_GD32W51X)
+#define SMP_TIME(x)	ADC_SAMPLETIME_##x##POINT5
+
+static const uint16_t acq_time_tbl[8] = {2, 15, 28, 56, 84, 112, 144, 480};
+static const uint32_t table_samp_time[] = {
+	SMP_TIME(1),
+	SMP_TIME(14),
+	SMP_TIME(27),
+	SMP_TIME(55),
+	SMP_TIME(83),
+	SMP_TIME(111),
+	SMP_TIME(143),
+	SMP_TIME(479)
+};
 #else
 #define SMP_TIME(x)	ADC_SAMPLETIME_##x##POINT5
 
@@ -193,8 +207,8 @@ static void adc_context_update_buffer_pointer(struct adc_context *ctx,
 
 static inline void adc_gd32_calibration(const struct adc_gd32_config *cfg)
 {
-#ifdef CONFIG_SOC_SERIES_GD32VW55X
-	/* The GD32VW55x ADC has no RSTCLB/CLB self-calibration bits. */
+#if defined(CONFIG_SOC_SERIES_GD32VW55X) || defined(CONFIG_SOC_SERIES_GD32W51X)
+	/* The GD32VW55x/W51x ADC has no RSTCLB/CLB self-calibration bits. */
 	ARG_UNUSED(cfg);
 #else
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_RSTCLB;
@@ -340,6 +354,11 @@ static int adc_gd32_start_read(const struct device *dev,
 #elif defined(CONFIG_SOC_SERIES_GD32VF103)
 	ADC_OVSCR(cfg->reg) &= ~ADC_OVSCR_DRES;
 	ADC_OVSCR(cfg->reg) |= OVSCR_DRES(resolution_id);
+#elif defined(CONFIG_SOC_SERIES_GD32W51X)
+	/* The GD32W51x ADC only converts on 12 bits */
+	if (resolution_id != 0U) {
+		return -ENOTSUP;
+	}
 #endif
 
 	if (sequence->calibrate) {
@@ -434,17 +453,20 @@ static int adc_gd32_init(const struct device *dev)
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_ETERC;
 #endif
 
-#ifdef CONFIG_SOC_SERIES_GD32VW55X
+#if defined(CONFIG_SOC_SERIES_GD32VW55X) || defined(CONFIG_SOC_SERIES_GD32W51X)
 	/*
-	 * The ADC kernel clock defaults to PCLK2/2 (80 MHz here), which is well
-	 * above the ADC maximum; divide PCLK2 by 8 (20 MHz), matching the vendor
-	 * BSP. Raise EOC after each conversion; the conversion is software
+	 * The ADC kernel clock defaults to PCLK2/2, which is above the ADC
+	 * maximum: divide PCLK2 by 8 on the GD32VW55x (20 MHz, matching the
+	 * vendor BSP) and by 4 on the GD32W51x (22.5 MHz, 35 MHz maximum).
+	 * Raise EOC after each conversion; the conversion is software
 	 * triggered (SWRCST), so no external trigger source is selected.
 	 */
 	{
 		volatile uint32_t *cctl = (volatile uint32_t *)(cfg->reg + 0x304U);
 
-		*cctl = (*cctl & ~ADC_CCTL_ADCCK) | ADC_ADCCK_PCLK2_DIV8;
+		*cctl = (*cctl & ~ADC_CCTL_ADCCK) |
+			(IS_ENABLED(CONFIG_SOC_SERIES_GD32W51X) ? ADC_ADCCK_PCLK2_DIV4
+								: ADC_ADCCK_PCLK2_DIV8);
 	}
 	ADC_CTL1(cfg->reg) |= ADC_CTL1_EOCM;
 #endif

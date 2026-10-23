@@ -73,8 +73,12 @@ static const struct gd32_exti_range rtc_alarm_range = {GD32_EXTI_LINE_RTC_ALARM,
 						       GD32_EXTI_LINE_RTC_ALARM};
 #endif /* GD32_EXTI_HAS_RTC_ALARM */
 
-/* The RTC wake-up timer drives EXTI line 21 and has its own IRQ. */
+/* The RTC wake-up timer drives an EXTI line of its own and has its own IRQ. */
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+#define GD32_EXTI_LINE_RTC_WAKEUP 24U
+#else
 #define GD32_EXTI_LINE_RTC_WAKEUP 21U
+#endif
 #define GD32_EXTI_HAS_RTC_WAKEUP                                                                   \
 	COND_CODE_1(DT_INST_IRQ_HAS_NAME(0, rtc_wakeup), (IS_ENABLED(CONFIG_PM)), (0))
 
@@ -124,6 +128,19 @@ static const uint8_t line2irq[NUM_EXTI_LINES] = {
 	EXTI_NOTSUP,
 	EXTI_NOTSUP,
 #endif /* CONFIG_SOC_SERIES_GD32VW55X */
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	COND_CODE_1(GD32_EXTI_HAS_RTC_WAKEUP, (DT_INST_IRQ_BY_NAME(0, rtc_wakeup, irq)),
+		    (EXTI_NOTSUP)),
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+	EXTI_NOTSUP,
+#endif /* CONFIG_SOC_SERIES_GD32W51X */
 };
 
 __unused static void gd32_exti_isr(const void *isr_data)

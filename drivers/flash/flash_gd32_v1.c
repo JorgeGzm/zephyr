@@ -36,6 +36,34 @@ LOG_MODULE_DECLARE(flash_gd32);
 #endif
 #define GD32_FMC_V1_ERASE_ERR	FMC_STAT_WPERR
 
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+#include <gd32_icache.h>
+
+/*
+ * Zephyr runs Secure-only on the GD32W51x and the image pages are marked
+ * Secure (FMC_SECMCFGx): the flash is erased and programmed through the
+ * Secure register set of the FMC, reached through its Secure alias, and
+ * written through the Secure alias of the flash. The Secure registers have
+ * the bit layout of the Non-secure ones.
+ */
+#define GD32_SEC_ALIAS_OFFSET	0x10000000U
+#define GD32_FMC_V1_KEY		REG32(FMC + GD32_SEC_ALIAS_OFFSET + 0x24U)
+#define GD32_FMC_V1_STAT	REG32(FMC + GD32_SEC_ALIAS_OFFSET + 0x2CU)
+#define GD32_FMC_V1_CTL		REG32(FMC + GD32_SEC_ALIAS_OFFSET + 0x30U)
+#define GD32_FMC_V1_ADDR	REG32(FMC + GD32_SEC_ALIAS_OFFSET + 0x34U)
+#define GD32_FMC_V1_FLASH_ADDR	(SOC_NV_FLASH_ADDR + 0x04000000U)
+#undef GD32_FMC_V1_WRITE_ERR
+#undef GD32_FMC_V1_ERASE_ERR
+#define GD32_FMC_V1_WRITE_ERR	(FMC_SECSTAT_SECERR | FMC_SECSTAT_SECWPERR)
+#define GD32_FMC_V1_ERASE_ERR	(FMC_SECSTAT_SECERR | FMC_SECSTAT_SECWPERR)
+#else
+#define GD32_FMC_V1_KEY		FMC_KEY
+#define GD32_FMC_V1_STAT	FMC_STAT
+#define GD32_FMC_V1_CTL		FMC_CTL
+#define GD32_FMC_V1_ADDR	FMC_ADDR
+#define GD32_FMC_V1_FLASH_ADDR	SOC_NV_FLASH_ADDR
+#endif /* CONFIG_SOC_SERIES_GD32W51X */
+
 #ifdef CONFIG_FLASH_PAGE_LAYOUT
 static const struct flash_pages_layout gd32_fmc_v1_layout[] = {
 	{
@@ -47,20 +75,28 @@ static const struct flash_pages_layout gd32_fmc_v1_layout[] = {
 
 static inline void gd32_fmc_v1_unlock(void)
 {
-	FMC_KEY = UNLOCK_KEY0;
-	FMC_KEY = UNLOCK_KEY1;
+	GD32_FMC_V1_KEY = UNLOCK_KEY0;
+	GD32_FMC_V1_KEY = UNLOCK_KEY1;
 }
 
 static inline void gd32_fmc_v1_lock(void)
 {
-	FMC_CTL |= FMC_CTL_LK;
+	GD32_FMC_V1_CTL |= FMC_CTL_LK;
+
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	/* Drop the instruction cache lines of the changed flash */
+	ICACHE_CTL |= ICACHE_CTL_INVAL;
+	while ((ICACHE_STAT & ICACHE_STAT_END) == 0U) {
+	}
+	ICACHE_FC = ICACHE_STAT_END;
+#endif
 }
 
 static int gd32_fmc_v1_wait_idle(void)
 {
 	const int64_t expired_time = k_uptime_get() + GD32_NV_FLASH_V1_TIMEOUT;
 
-	while (FMC_STAT & FMC_STAT_BUSY) {
+	while (GD32_FMC_V1_STAT & FMC_STAT_BUSY) {
 		if (k_uptime_get() > expired_time) {
 			return -ETIMEDOUT;
 		}
@@ -103,17 +139,17 @@ bool flash_gd32_valid_range(off_t offset, uint32_t len, bool write)
 
 int flash_gd32_write_range(off_t offset, const void *data, size_t len)
 {
-	flash_prg_t *prg_flash = (flash_prg_t *)((uint8_t *)SOC_NV_FLASH_ADDR + offset);
+	flash_prg_t *prg_flash = (flash_prg_t *)((uint8_t *)GD32_FMC_V1_FLASH_ADDR + offset);
 	flash_prg_t *prg_data = (flash_prg_t *)data;
 	int ret = 0;
 
 	gd32_fmc_v1_unlock();
 
-	if (FMC_STAT & FMC_STAT_BUSY) {
+	if (GD32_FMC_V1_STAT & FMC_STAT_BUSY) {
 		return -EBUSY;
 	}
 
-	FMC_CTL |= FMC_CTL_PG;
+	GD32_FMC_V1_CTL |= FMC_CTL_PG;
 
 	for (size_t i = 0U; i < (len / sizeof(flash_prg_t)); i++) {
 		*prg_flash++ = *prg_data++;
@@ -124,14 +160,14 @@ int flash_gd32_write_range(off_t offset, const void *data, size_t len)
 		goto expired_out;
 	}
 
-	if (FMC_STAT & GD32_FMC_V1_WRITE_ERR) {
+	if (GD32_FMC_V1_STAT & GD32_FMC_V1_WRITE_ERR) {
 		ret = -EIO;
-		FMC_STAT |= GD32_FMC_V1_WRITE_ERR;
+		GD32_FMC_V1_STAT |= GD32_FMC_V1_WRITE_ERR;
 		LOG_ERR("FMC programming failed");
 	}
 
 expired_out:
-	FMC_CTL &= ~FMC_CTL_PG;
+	GD32_FMC_V1_CTL &= ~FMC_CTL_PG;
 
 	gd32_fmc_v1_lock();
 
@@ -144,29 +180,29 @@ static int gd32_fmc_v1_page_erase(uint32_t page_addr)
 
 	gd32_fmc_v1_unlock();
 
-	if (FMC_STAT & FMC_STAT_BUSY) {
+	if (GD32_FMC_V1_STAT & FMC_STAT_BUSY) {
 		return -EBUSY;
 	}
 
-	FMC_CTL |= FMC_CTL_PER;
+	GD32_FMC_V1_CTL |= FMC_CTL_PER;
 
-	FMC_ADDR = page_addr;
+	GD32_FMC_V1_ADDR = page_addr;
 
-	FMC_CTL |= FMC_CTL_START;
+	GD32_FMC_V1_CTL |= FMC_CTL_START;
 
 	ret = gd32_fmc_v1_wait_idle();
 	if (ret < 0) {
 		goto expired_out;
 	}
 
-	if (FMC_STAT & GD32_FMC_V1_ERASE_ERR) {
+	if (GD32_FMC_V1_STAT & GD32_FMC_V1_ERASE_ERR) {
 		ret = -EIO;
-		FMC_STAT |= GD32_FMC_V1_ERASE_ERR;
+		GD32_FMC_V1_STAT |= GD32_FMC_V1_ERASE_ERR;
 		LOG_ERR("FMC page %u erase failed", page_addr);
 	}
 
 expired_out:
-	FMC_CTL &= ~FMC_CTL_PER;
+	GD32_FMC_V1_CTL &= ~FMC_CTL_PER;
 
 	gd32_fmc_v1_lock();
 
@@ -175,7 +211,7 @@ expired_out:
 
 int flash_gd32_erase_block(off_t offset, size_t size)
 {
-	uint32_t page_addr = SOC_NV_FLASH_ADDR + offset;
+	uint32_t page_addr = GD32_FMC_V1_FLASH_ADDR + offset;
 	int ret = 0;
 
 	while (size > 0U) {

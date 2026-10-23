@@ -328,6 +328,15 @@ static inline void gd32_dma_deinit(uint32_t reg, dma_channel_enum ch)
 	GD32_DMA_CHMADDR(reg, ch) = DMA_CHMADDR_RESET_VALUE;
 	GD32_DMA_INTC(reg) |= DMA_FLAG_ADD(DMA_CHINTF_RESET_VALUE, ch);
 #endif
+
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	/*
+	 * Zephyr runs Secure-only and the SRAM is Secure: a Non-secure channel
+	 * reads it as zero and its writes are dropped. Make both ends of every
+	 * transfer Secure.
+	 */
+	DMA_CHSCTL(reg, ch) = DMA_CHXSCTL_SECM | DMA_CHXSCTL_SSEC | DMA_CHXSCTL_DSEC;
+#endif
 }
 
 /*

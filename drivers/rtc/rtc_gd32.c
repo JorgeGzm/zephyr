@@ -41,6 +41,23 @@ LOG_MODULE_REGISTER(rtc_gd32, CONFIG_RTC_LOG_LEVEL);
 #define GD32_RTC_ALRMTD(reg, id) REG32((reg) + (((id) == 0U) ? 0x1CU : 0x20U))
 #define GD32_RTC_ALRMSS(reg, id) REG32((reg) + (((id) == 0U) ? 0x44U : 0x48U))
 
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+/*
+ * The GD32W51x keeps the initialization and synchronization flags at the
+ * same offset and bit positions (RTC_ICS) and moves the event flags to a
+ * status register of their own, cleared through RTC_STATC.
+ */
+#define RTC_STAT_ALRM0WF RTC_ICS_ALRM0WF
+#define RTC_STAT_ALRM1WF RTC_ICS_ALRM1WF
+#define RTC_STAT_YCM     RTC_ICS_YCM
+#define RTC_STAT_RSYNF   RTC_ICS_RSYNF
+#define RTC_STAT_INITF   RTC_ICS_INITF
+#define RTC_STAT_INITM   RTC_ICS_INITM
+
+#define GD32_RTC_EVT_STAT(reg)  REG32((reg) + 0x58U)
+#define GD32_RTC_EVT_STATC(reg) REG32((reg) + 0x64U)
+#endif /* CONFIG_SOC_SERIES_GD32W51X */
+
 /* BCD fields of the time and date registers */
 #define GD32_RTC_TIME_SEC_POS  0U
 #define GD32_RTC_TIME_SEC_MSK  0x7FU
@@ -327,6 +344,26 @@ static inline uint32_t rtc_gd32_alarm_flag(uint16_t id)
 	return (id == 0U) ? RTC_STAT_ALRM0F : RTC_STAT_ALRM1F;
 }
 
+static inline bool rtc_gd32_alarm_fired(const struct rtc_gd32_config *cfg, uint16_t id)
+{
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	return (GD32_RTC_EVT_STAT(cfg->reg) & rtc_gd32_alarm_flag(id)) != 0U;
+#else
+	return (GD32_RTC_STAT(cfg->reg) & rtc_gd32_alarm_flag(id)) != 0U;
+#endif
+}
+
+/* The caller unlocks the write protection where the series needs it */
+static inline void rtc_gd32_alarm_clear(const struct rtc_gd32_config *cfg, uint16_t id)
+{
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	/* The flag clear bits sit at the positions of the flags */
+	GD32_RTC_EVT_STATC(cfg->reg) = rtc_gd32_alarm_flag(id);
+#else
+	GD32_RTC_STAT(cfg->reg) &= ~rtc_gd32_alarm_flag(id);
+#endif
+}
+
 /* A set mask bit means the field takes part in the comparison; the register
  * mask bits mean the opposite.
  */
@@ -455,7 +492,7 @@ static int rtc_gd32_alarm_set_time(const struct device *dev, uint16_t id, uint16
 
 	/* The alarm registers only take writes while the alarm is off */
 	GD32_RTC_CTL(cfg->reg) &= ~(rtc_gd32_alarm_en(id) | rtc_gd32_alarm_ie(id));
-	GD32_RTC_STAT(cfg->reg) &= ~rtc_gd32_alarm_flag(id);
+	rtc_gd32_alarm_clear(cfg, id);
 
 	if (mask != 0U || timeptr != NULL) {
 		ret = rtc_gd32_wait_flag(cfg, rtc_gd32_alarm_wf(id));
@@ -520,9 +557,9 @@ static int rtc_gd32_alarm_is_pending(const struct device *dev, uint16_t id)
 	data->alarms[id].pending = false;
 
 	/* An alarm that fired with its interrupt off is only seen here */
-	if ((GD32_RTC_STAT(cfg->reg) & rtc_gd32_alarm_flag(id)) != 0U) {
+	if (rtc_gd32_alarm_fired(cfg, id)) {
 		rtc_gd32_unlock(cfg);
-		GD32_RTC_STAT(cfg->reg) &= ~rtc_gd32_alarm_flag(id);
+		rtc_gd32_alarm_clear(cfg, id);
 		rtc_gd32_lock(cfg);
 		pending = 1;
 	}
@@ -563,12 +600,12 @@ static void rtc_gd32_alarm_isr(uint8_t line, void *user)
 		void *user_data;
 		k_spinlock_key_t key;
 
-		if ((GD32_RTC_STAT(cfg->reg) & rtc_gd32_alarm_flag(id)) == 0U) {
+		if (!rtc_gd32_alarm_fired(cfg, id)) {
 			continue;
 		}
 
 		rtc_gd32_unlock(cfg);
-		GD32_RTC_STAT(cfg->reg) &= ~rtc_gd32_alarm_flag(id);
+		rtc_gd32_alarm_clear(cfg, id);
 		rtc_gd32_lock(cfg);
 
 		key = k_spin_lock(&data->alarm_lock);

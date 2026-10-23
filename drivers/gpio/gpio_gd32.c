@@ -16,6 +16,11 @@
 
 #include <zephyr/drivers/gpio/gpio_utils.h>
 
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+/** GPIOx_SCFG (pin security), reached through the Secure alias of the port */
+#define GD32W51X_GPIO_SCFG_S_OFFSET (0x10000000U + 0x30U)
+#endif
+
 #ifdef CONFIG_GD32_HAS_AF_PINMUX
 /** SYSCFG DT node */
 #define SYSCFG_NODE DT_NODELABEL(syscfg)
@@ -354,6 +359,16 @@ static int gpio_gd32_init(const struct device *port)
 			       (clock_control_subsys_t)&config->clkid_exti);
 
 	(void)reset_line_toggle_dt(&config->reset);
+
+#ifdef CONFIG_SOC_SERIES_GD32W51X
+	/*
+	 * The pins are Secure after reset (GPIOx_SCFG = 0xffff). The Secure
+	 * core drives them anyway, but the Non-secure peripherals (the ADC
+	 * inputs among them) do not reach Secure pins: release the whole port
+	 * through the Secure alias of its registers.
+	 */
+	sys_write32(0U, config->reg + GD32W51X_GPIO_SCFG_S_OFFSET);
+#endif
 
 	return 0;
 }
