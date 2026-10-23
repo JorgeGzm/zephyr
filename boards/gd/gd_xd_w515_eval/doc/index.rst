@@ -137,6 +137,35 @@ which has the ``gd32w51x`` flash driver; the mainline OpenOCD does not support t
 TrustZone enabled the flash driver registers the flash at its Secure alias, so the board
 programs the raw binary at ``0x0c000000``.
 
+J-Link
+======
+
+An external SEGGER J-Link connects to the SWD header (SWDIO on PA13, SWCLK on PA14). With
+TrustZone enabled, the built-in ``GD32W515PI`` J-Link device cannot program the board: its
+flash loader erases through the Non-secure registers of the flash controller and fails on
+the Secure pages. Define a J-Link device that uses the Secure flash algorithm of the
+GigaDevice GD32W51x DFP (``Flash/GD32W515_S.FLM``) on the ``0x08000000`` bank, in
+``~/.config/SEGGER/JLinkDevices/GigaDevice/GD32W515_S/GD32W515_S.xml`` next to the FLM file:
+
+.. code-block:: xml
+
+   <DataBase>
+     <Device>
+       <ChipInfo Vendor="GigaDevice" Name="GD32W515PI_S" Core="JLINK_CORE_CORTEX_M33"
+                 WorkRAMAddr="0x20000000" WorkRAMSize="0x8000" />
+       <FlashBankInfo Name="Internal flash (Secure)" BaseAddr="0x08000000"
+                      MaxSize="0x200000" Loader="GD32W515_S.FLM"
+                      LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1" />
+     </Device>
+   </DataBase>
+
+The images then program as they are, MCUboot builds included, and ``west debug`` loads them:
+
+.. code-block:: console
+
+   west flash --runner jlink --device=GD32W515PI_S
+   west debug --runner jlink --device=GD32W515PI_S
+
 Serial console
 ==============
 
