@@ -184,7 +184,7 @@ manifest:
         - hal
     - name: hal_gigadevice
       url: https://github.com/JorgeGzm/hal_gigadevice
-      revision: 895bb64d2b514f6dad22921b52b02313e89c6d9d
+      revision: 0164ca780db2c77b153fe3fd445155dc82e20358
       path: modules/hal/gigadevice
       groups:
         - hal
