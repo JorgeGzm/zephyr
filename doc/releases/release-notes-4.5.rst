@@ -1007,6 +1007,7 @@ New Boards
 * GigaDevice Semiconductor
 
   * :zephyr:board:`gd32vw553k_start` (``gd32vw553k_start``)
+  * :zephyr:board:`gd_xd_w515_eval` (``gd_xd_w515_eval``)
 
 * Heimann Sensor GmbH
 

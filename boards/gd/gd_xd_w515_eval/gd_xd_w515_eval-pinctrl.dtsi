@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <dt-bindings/pinctrl/gd32w515p(i)xx-pinctrl.h>
+
+&pinctrl {
+	usart2_default: usart2_default {
+		group1 {
+			pinmux = <USART2_TX_PB10>, <USART2_RX_PB11>;
+		};
+	};
+
+	i2c0_default: i2c0_default {
+		group1 {
+			pinmux = <I2C0_SCL_PB15>, <I2C0_SDA_PA8>;
+			drive-open-drain;
+			bias-pull-up;
+		};
+	};
+
+	spi0_default: spi0_default {
+		group1 {
+			pinmux = <SPI0_SCK_PA11>, <SPI0_MOSI_PA9>;
+		};
+	};
+
+	spi1_default: spi1_default {
+		group1 {
+			pinmux = <SPI1_SCK_PC7>, <SPI1_MISO_PB6>, <SPI1_MOSI_PB9>;
+		};
+	};
+
+	adc0_default: adc0_default {
+		group1 {
+			pinmux = <ADC_IN1_PA1>, <ADC_IN2_PA2>, <ADC_IN3_PA3>, <ADC_IN6_PC2>;
+		};
+	};
+
+	pwm2_default: pwm2_default {
+		group1 {
+			pinmux = <TIMER2_CH1_PB0>;
+		};
+	};
+};

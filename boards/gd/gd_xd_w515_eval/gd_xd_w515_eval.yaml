@@ -1,0 +1,29 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: gd_xd_w515_eval
+name: GigaDevice GD-xD-W515-EVAL
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+ram: 448
+flash: 1920
+supported:
+  - adc
+  - comparator
+  - counter
+  - crc
+  - crypto
+  - dma
+  - entropy
+  - flash
+  - gpio
+  - hwinfo
+  - i2c
+  - pwm
+  - rtc
+  - spi
+  - uart
+  - watchdog
+vendor: gd

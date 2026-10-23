@@ -1,0 +1,6 @@
+board:
+  name: gd_xd_w515_eval
+  full_name: GD-xD-W515-EVAL
+  vendor: gd
+  socs:
+    - name: gd32w515

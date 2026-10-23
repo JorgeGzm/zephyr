@@ -1,0 +1,190 @@
+/*
+ * Copyright (c) 2026 Jorge Guzman
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <gd/gd32w51x/gd32w515xi.dtsi>
+#include "gd_xd_w515_eval-pinctrl.dtsi"
+
+/ {
+	model = "GigaDevice GD-xD-W515-EVAL";
+	compatible = "gd,gd-xd-w515-eval";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &code_partition;
+		zephyr,console = &usart2;
+		zephyr,shell-uart = &usart2;
+		zephyr,flash-controller = &fmc;
+		zephyr,entropy = &trng;
+		zephyr,crc = &crc;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led1: led1 {
+			gpios = <&gpiob 1 GPIO_ACTIVE_HIGH>;
+			label = "LED1";
+		};
+
+		led2: led2 {
+			gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
+			label = "LED2";
+		};
+
+		led3: led3 {
+			gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
+			label = "LED3";
+		};
+
+		led4: led4 {
+			gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
+			label = "LED4";
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		/* LCD backlight (transistor Q1 on the LCD module) */
+		backlight: backlight {
+			pwms = <&pwm2 1 PWM_MSEC(1) PWM_POLARITY_NORMAL>;
+			label = "LCD backlight";
+		};
+	};
+
+	aliases {
+		led0 = &led1;
+		led1 = &led2;
+		led2 = &led3;
+		led3 = &led4;
+		pwm-led0 = &backlight;
+		watchdog0 = &fwdgt;
+		rtc = &rtc;
+	};
+};
+
+&gpioa {
+	status = "okay";
+};
+
+&gpiob {
+	status = "okay";
+};
+
+&gpioc {
+	status = "okay";
+};
+
+/* USART2 on PB10/PB11 is wired to the CH340E on the micro-USB connector */
+&usart2 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&usart2_default>;
+	pinctrl-names = "default";
+};
+
+/* GD30BC2416 battery charger: only answers with a battery or a supply on BAT */
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+};
+
+/* ST7735S LCD module connector: DC on PA10, RST on PC6, no MISO */
+&spi0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpiob 13 GPIO_ACTIVE_LOW>;
+};
+
+/* GSL6157 fingerprint module connector: STD on PB5, IRQ on PA12 */
+&spi1 {
+	status = "okay";
+	pinctrl-0 = <&spi1_default>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpiob 8 GPIO_ACTIVE_LOW>;
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_default>;
+	pinctrl-names = "default";
+};
+
+&timer2 {
+	status = "okay";
+	prescaler = <179>;
+
+	pwm2: pwm {
+		status = "okay";
+		pinctrl-0 = <&pwm2_default>;
+		pinctrl-names = "default";
+	};
+};
+
+&fwdgt {
+	status = "okay";
+};
+
+&wwdgt {
+	status = "okay";
+};
+
+/* No LXTAL on the board: the RTC runs on the IRC32K */
+&rtc {
+	status = "okay";
+};
+
+&crc {
+	status = "okay";
+};
+
+&trng {
+	status = "okay";
+};
+
+&cau {
+	status = "okay";
+};
+
+&hau {
+	status = "okay";
+};
+
+&lvd {
+	status = "okay";
+};
+
+&dma0 {
+	status = "okay";
+};
+
+&dma1 {
+	status = "okay";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		code_partition: partition@0 {
+			label = "code";
+			reg = <0x00000000 DT_SIZE_K(1920)>;
+			read-only;
+		};
+
+		storage_partition: partition@1e0000 {
+			label = "storage";
+			reg = <0x001e0000 DT_SIZE_K(128)>;
+		};
+	};
+};
