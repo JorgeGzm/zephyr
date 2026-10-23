@@ -1,0 +1,28 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  NOR flash memory on the GigaDevice GD32 QSPI controller.
+
+  The memory is driven in the indirect mode, with single line commands:
+  read (0x0b), page program (0x02) and 4 KiB sector, 64 KiB block and chip
+  erase.
+
+compatible: "gd,gd32-qspi-nor"
+
+include: ["flash-controller.yaml", "jedec,jesd216.yaml"]
+
+on-bus: qspi
+
+properties:
+  reg:
+    required: true
+
+  size:
+    required: true
+    description: Flash memory size in bits
+
+  qspi-max-frequency:
+    type: int
+    required: true
+    description: Maximum clock frequency of the memory in Hz

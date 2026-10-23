@@ -1,0 +1,27 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  GigaDevice GD32 QSPI controller, for an external NOR flash memory.
+
+compatible: "gd,gd32-qspi"
+
+include: [base.yaml, pinctrl-device.yaml, reset-device.yaml]
+
+bus: qspi
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  resets:
+    required: true
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true

@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Jorge Guzman
+# SPDX-License-Identifier: Apache-2.0
+
+config FLASH_GD32_QSPI
+	bool "GigaDevice GD32 QSPI NOR flash driver"
+	default y
+	depends on DT_HAS_GD_GD32_QSPI_NOR_ENABLED
+	select FLASH_HAS_DRIVER_ENABLED
+	select FLASH_HAS_PAGE_LAYOUT
+	select FLASH_HAS_EXPLICIT_ERASE
+	select FLASH_JESD216
+	select PINCTRL
+	select RESET
+	help
+	  Enable the driver of a NOR flash memory on the GD32 QSPI controller.
+
+if FLASH_GD32_QSPI
+
+config FLASH_GD32_QSPI_INIT_PRIORITY
+	int "GD32 QSPI NOR flash init priority"
+	default KERNEL_INIT_PRIORITY_DEVICE
+	help
+	  Device initialization priority of the GD32 QSPI NOR flash driver.
+
+endif # FLASH_GD32_QSPI
